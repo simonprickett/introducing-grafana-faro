@@ -1,8 +1,8 @@
 import { api, resetCartId } from '../api.js';
-import { trackEvent, trackMeasurement } from '../faro.js';
+import { trackEvent, trackMeasurement, startUserAction } from '../faro.js';
 import * as failures from '../failures.js';
 import { randomName } from '../names.js';
-import { esc, money, notification, setCartCount } from '../util.js';
+import { esc, money, notification, showError, setCartCount, actionAttrs } from '../util.js';
 
 export async function cartView(root) {
   root.innerHTML = '<progress class="progress is-small is-primary" max="100"></progress>';
@@ -12,7 +12,7 @@ export async function cartView(root) {
     try {
       cart = await api.getCart();
     } catch (err) {
-      root.innerHTML = notification(`Could not load your cart: ${err.message}`);
+      showError(root, `Could not load your cart: ${err.message}`, () => cartView(root));
       return;
     }
     setCartCount(cart.items.reduce((n, i) => n + i.quantity, 0));
@@ -33,7 +33,7 @@ export async function cartView(root) {
             <td><img class="cart-img" src="${esc(product.image)}" alt="" />${esc(product.name)}</td>
             <td>× ${quantity}</td>
             <td>${money(lineTotalCurrencyUnits, cart.currency)}</td>
-            <td><button class="button is-small is-light remove" data-id="${esc(product.id)}">Remove</button></td>
+            <td><button class="button is-small is-light remove" data-id="${esc(product.id)}" ${actionAttrs('remove-from-cart')}>Remove</button></td>
           </tr>`,
           )
           .join('')}</tbody>
@@ -72,6 +72,8 @@ export async function cartView(root) {
 
     root.querySelector('#checkout').addEventListener('submit', async (e) => {
       e.preventDefault();
+      // Programmatic (not a data attribute) so that pressing Enter in the name box counts too.
+      startUserAction('place-order', { items: cart.items.length });
       const btn = e.currentTarget.querySelector('button[type=submit]');
       btn.classList.add('is-loading');
       trackEvent('checkout_started', { items: cart.items.length, totalCurrencyUnits: cart.totalCurrencyUnits });

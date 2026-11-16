@@ -1,7 +1,7 @@
 import { api } from '../api.js';
 import { trackEvent } from '../faro.js';
 import * as failures from '../failures.js';
-import { esc, money, notification, flashMessage, setCartCount } from '../util.js';
+import { esc, money, notification, flashMessage, showError, setCartCount, actionAttrs } from '../util.js';
 
 export async function productView(root, id) {
   root.innerHTML = '<progress class="progress is-small is-primary" max="100"></progress>';
@@ -9,7 +9,7 @@ export async function productView(root, id) {
     const { currency, product: p } = await api.getProduct(id);
     trackEvent('view_product', { productId: p.id });
     root.innerHTML = `
-      <p class="mb-4"><a href="#/">&larr; Back to menu</a></p>
+      <p class="mb-4"><a href="#/" ${actionAttrs('back-to-menu')}>&larr; Back to menu</a></p>
       ${failures.handledFallback('product')}
       <div class="columns product-detail">
         <div class="column is-4"><img src="${esc(failures.imageSrc(p, 'product'))}" alt="${esc(p.name)}" /></div>
@@ -17,7 +17,7 @@ export async function productView(root, id) {
           <h1 class="title">${esc(p.name)}</h1>
           <p class="subtitle">${money(p.priceCurrencyUnits, currency)}</p>
           <p class="mb-4">${esc(p.description)}</p>
-          <button id="add" class="button is-primary">Add to cart</button>
+          <button id="add" class="button is-primary" ${actionAttrs('add-to-cart')}>Add to cart</button>
           <div id="msg" class="mt-4"></div>
         </div>
       </div>`;
@@ -39,6 +39,7 @@ export async function productView(root, id) {
       }
     });
   } catch (err) {
-    root.innerHTML = notification(err.message);
+    if (err.status === 404) root.innerHTML = notification(err.message);
+    else showError(root, err.message, () => productView(root, id));
   }
 }

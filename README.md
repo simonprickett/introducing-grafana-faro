@@ -59,11 +59,20 @@ The frontend ([`money()` in `frontend/src/util.js`](frontend/src/util.js)) asks 
 | In the app | Telemetry |
 |---|---|
 | Page navigation | Faro views (`menu`, `product`, `cart`, `order`, `demo`) |
+| Clicks that matter | Faro **user actions** (`add-to-cart`, `search`, `view-product`, `filter-category`, `remove-from-cart`, `place-order`, `open-cart`, `open-menu`, `back-to-menu`). Each groups the API calls, errors and events it causes, and the browser's fetch spans carry `faro.action.user.name` / `faro.action.user.parentId`, so you can go from a click to its trace. Declared in the HTML with `data-faro-user-action-name` (see `actionAttrs` in `frontend/src/util.js`); `search` and `place-order` start programmatically with `startUserAction` |
 | Search / filter / add to cart / checkout | Faro events (`search`, `add_to_cart`, `checkout_started`, `order_placed`…) and a custom `order` measurement |
 | Every API call | Browser span → backend span (same trace id), plus `inventory.check` and `payment.process` child spans on checkout |
 | Backend logs | OTel logs carrying the trace id, for log ↔ trace correlation |
 | Orders | Metrics: `coffee_cart.orders.placed`, `coffee_cart.checkout.failures`, `coffee_cart.order.value` |
 | Random user identity | Faro `setUser` — each browser gets a stable fake username |
+
+## Demo conveniences
+
+- **Session / trace footer.** A bar at the bottom of every page shows the Faro **session ID** and the **trace ID of the last API call** (with the method, path and status), each with a **Copy** button, so you can paste them straight into Tempo or Frontend Observability. The trace ID is captured from the browser's fetch span and is the same ID sent in the `traceparent` header, so it also identifies the backend's spans. Hide it from the Demo controls page. It shows a hint instead if Faro is disabled.
+- **Finding a trace in the backend logs.** Every API request writes a log line such as `GET /api/products 200 13.9ms`, and every backend log line (stdout and OTLP) carries `trace_id` and `span_id`. Copy the trace ID from the footer and run `docker compose logs backend | grep <trace id>` to see exactly what the backend did for that request.
+- **Generate name.** The cart page has a **Generate name** button that fills in a random name from hard-coded lists (`frontend/src/names.js`), so nobody has to type during a demo.
+- **Retry.** A failed menu, product, cart, order or demo-controls load shows a **Retry** button, which makes "turn on the 503s, then retry until it works" a natural demo beat.
+- **Polish.** Pages crossfade using the CSS View Transitions API where the browser supports it (and the user hasn't asked for reduced motion), and the cart count pops when it changes. The transition covers only the page shell, so a slow API call still shows its progress bar.
 
 ## Breaking things on purpose
 

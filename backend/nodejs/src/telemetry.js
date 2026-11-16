@@ -3,7 +3,7 @@
 // to OTel Logs. Log records written while a span is active automatically carry
 // that span's trace_id/span_id, which is what enables log <-> trace correlation.
 
-const { trace, metrics, SpanStatusCode } = require('@opentelemetry/api');
+const { trace, metrics, SpanStatusCode, isSpanContextValid } = require('@opentelemetry/api');
 const { logs, SeverityNumber } = require('@opentelemetry/api-logs');
 
 const tracer = trace.getTracer('coffee-cart');
@@ -28,7 +28,14 @@ const levels = {
 };
 
 function log(level, message, attributes = {}) {
-  console.log(JSON.stringify({ level, message, ...attributes }));
+  // Include the trace/span IDs in the stdout line too, so `docker compose logs backend` can be
+  // searched by the trace ID shown in the frontend's footer. (The OTLP record gets them from
+  // the active context automatically.)
+  const spanContext = trace.getActiveSpan()?.spanContext();
+  const ids = spanContext && isSpanContextValid(spanContext)
+    ? { trace_id: spanContext.traceId, span_id: spanContext.spanId }
+    : {};
+  console.log(JSON.stringify({ level, message, ...ids, ...attributes }));
   otelLogger.emit({
     severityNumber: levels[level],
     severityText: level.toUpperCase(),

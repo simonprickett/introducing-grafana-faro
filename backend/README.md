@@ -97,6 +97,11 @@ What the demo relies on (names matter, because the README and any dashboards ref
 - `coffee_cart.checkout.failures`: counter with attribute `reason` (`inventory` or `payment`).
 - `coffee_cart.order.value`: histogram, unit `{currency_unit}`.
 
+**Request log**
+- One log line per API request, written when the response finishes (skip `/api/health` and CORS preflights). Message: `<METHOD> <path-and-query> <status> <duration>ms`, for example `GET /api/products 200 13.9ms`. Attributes: `method`, `path`, `status`, `durationMs`. Level: `info` below 400, `warn` for 4xx, `error` for 5xx.
+- It must be written inside the request's trace context, so the line carries the trace ID.
+
 **Logs**
+- Every stdout JSON line should include `trace_id` and `span_id` when written inside a request, so `docker compose logs backend` can be searched by the trace ID shown in the frontend footer.
 - Emit OTLP log records while the request span is active, so they carry `trace_id` and `span_id`. Also print JSON lines to stdout so `docker compose logs backend` is useful.
 - Levels in use: `info` (listings, add to cart, order placed), `warn` (out of stock, slow call injected, chaos changed), `error` (checkout failed, unhandled error).

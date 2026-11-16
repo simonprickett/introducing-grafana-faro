@@ -23,8 +23,20 @@ export const debounce = (fn, ms) => {
 
 export const setCartCount = (n) => {
   const el = document.getElementById('cart-count');
-  if (el) el.textContent = String(n);
+  if (!el || el.textContent === String(n)) return;
+  el.textContent = String(n);
+  // Restart the "pop" animation so every change is noticeable, even off-screen.
+  el.classList.remove('bump');
+  void el.offsetWidth;
+  el.classList.add('bump');
 };
+
+// An error message with a Retry button, so a failed load isn't a dead end.
+export function showError(el, message, onRetry) {
+  el.innerHTML = `<div class="notification is-danger is-light">${esc(message)}
+    <button class="button is-small is-danger ml-3 retry">Retry</button></div>`;
+  el.querySelector('.retry').addEventListener('click', onRetry);
+}
 
 // A small status pill (e.g. "Saved", "Latte added to your cart") that fades out after a moment.
 // Re-calling it on the same element restarts the timers rather than stacking messages.
@@ -38,3 +50,8 @@ export function flashMessage(el, text, kind = 'success', holdMs) {
     setTimeout(() => (el.innerHTML = ''), hold + 500),
   ];
 }
+
+// Marks an element as a Faro "user action". The action starts on pointerdown (or Enter/Space),
+// which is *before* the click handler fires its API call, so we allow up to 1 s (the maximum)
+// for the first request or DOM change instead of the 100 ms default.
+export const actionAttrs = (name) => `data-faro-user-action-name="${name}" data-faro-user-action-timeout="1000"`;

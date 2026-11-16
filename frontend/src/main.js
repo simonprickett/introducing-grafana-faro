@@ -9,8 +9,10 @@ import { productView } from './views/product.js';
 import { cartView } from './views/cart.js';
 import { orderView } from './views/order.js';
 import { demoView } from './views/demo.js';
+import { initFooter } from './footer.js';
 
 startFaro();
+initFooter();
 
 // Give each browser a stable, made-up identity so sessions can be told apart.
 const NAMES = ['alex', 'sam', 'jo', 'robin', 'casey', 'jamie', 'taylor', 'morgan'];
@@ -46,18 +48,39 @@ const routes = [
 
 const root = document.getElementById('app');
 
+const canTransition = () =>
+  typeof document.startViewTransition === 'function' &&
+  !matchMedia('(prefers-reduced-motion: reduce)').matches &&
+  root.childElementCount > 0; // no transition for the very first render
+
 async function route() {
   const path = location.hash.slice(1) || '/';
-  for (const r of routes) {
-    const match = path.match(r.pattern);
-    if (match) {
-      setView(r.name); // tells Faro which "view" subsequent telemetry belongs to
-      await r.render(root, ...match.slice(1).map(decodeURIComponent));
-      return;
-    }
-  }
-  setView('not-found');
-  root.innerHTML = '<p>Page not found. <a href="#/">Back to the menu</a>.</p>';
+  const found = routes.find((r) => r.pattern.test(path));
+  const render = found
+    ? () => {
+        setView(found.name); // tells Faro which "view" subsequent telemetry belongs to
+        return found.render(root, ...path.match(found.pattern).slice(1).map(decodeURIComponent));
+      }
+    : () => {
+        setView('not-found');
+        root.innerHTML = '<p>Page not found. <a href="#/">Back to the menu</a>.</p>';
+      };
+
+  // A view paints its shell (title, progress bar) synchronously and fills in data after its
+  // API calls return. The transition callback returns straight after the shell is painted, so
+  // the crossfade is quick and a slow API call still shows its progress bar instead of freezing
+  // the page.
+  await new Promise((resolve, reject) => {
+    const run = () => {
+      try {
+        resolve(render());
+      } catch (err) {
+        reject(err);
+      }
+    };
+    if (canTransition()) document.startViewTransition(run);
+    else run();
+  });
 }
 
 window.addEventListener('hashchange', route);

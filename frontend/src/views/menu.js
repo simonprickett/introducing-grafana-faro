@@ -1,7 +1,7 @@
 import { api } from '../api.js';
-import { trackEvent } from '../faro.js';
+import { trackEvent, startUserAction } from '../faro.js';
 import * as failures from '../failures.js';
-import { esc, money, notification, flashMessage, debounce, setCartCount } from '../util.js';
+import { esc, money, notification, flashMessage, showError, debounce, setCartCount, actionAttrs } from '../util.js';
 
 const CATEGORIES = [
   ['', 'All'],
@@ -24,7 +24,7 @@ export async function menuView(root) {
     </div>
     <div class="tabs is-toggle" id="tabs"><ul>${CATEGORIES.map(
       ([value, label]) =>
-        `<li data-category="${value}"${value === '' ? ' class="is-active"' : ''}><a>${label}</a></li>`,
+        `<li data-category="${value}" ${actionAttrs('filter-category')}${value === '' ? ' class="is-active"' : ''}><a>${label}</a></li>`,
     ).join('')}</ul></div>
     <div id="results"><progress class="progress is-small is-primary" max="100"></progress></div>`;
 
@@ -44,23 +44,23 @@ export async function menuView(root) {
           (p) => `
         <div class="column is-3">
           <div class="card product-card">
-            <div class="card-image"><a href="#/product/${esc(p.id)}"><img src="${esc(failures.imageSrc(p, 'menu'))}" alt="${esc(p.name)}" /></a></div>
+            <div class="card-image"><a href="#/product/${esc(p.id)}" ${actionAttrs('view-product')}><img src="${esc(failures.imageSrc(p, 'menu'))}" alt="${esc(p.name)}" /></a></div>
             <div class="card-content">
-              <p class="title is-5"><a href="#/product/${esc(p.id)}">${esc(p.name)}</a></p>
+              <p class="title is-5"><a href="#/product/${esc(p.id)}" ${actionAttrs('view-product')}>${esc(p.name)}</a></p>
               <div class="price-row">
                 <p class="subtitle is-6 mb-0">${money(p.priceCurrencyUnits, currency)}</p>
                 <div class="feedback"></div>
               </div>
             </div>
             <footer class="card-footer">
-              <button class="button is-primary is-fullwidth add-to-cart" data-id="${esc(p.id)}">Add to cart</button>
+              <button class="button is-primary is-fullwidth add-to-cart" data-id="${esc(p.id)}" ${actionAttrs('add-to-cart')}>Add to cart</button>
             </footer>
           </div>
         </div>`,
         )
         .join('')}</div>`;
     } catch (err) {
-      results.innerHTML = notification(`Could not load the menu: ${err.message}`);
+      showError(results, `Could not load the menu: ${err.message}`, load);
     }
   }
 
@@ -68,6 +68,7 @@ export async function menuView(root) {
     'input',
     debounce((e) => {
       q = e.target.value;
+      startUserAction('search', { query: q });
       trackEvent('search', { query: q });
       if (failures.beforeAction('search')) return;
       load();

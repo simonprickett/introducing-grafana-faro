@@ -1,14 +1,16 @@
 import { api } from '../api.js';
 import * as failures from '../failures.js';
-import { esc, notification, flashMessage } from '../util.js';
+import { esc, flashMessage, showError } from '../util.js';
+import { isFooterVisible, setFooterVisible } from '../footer.js';
 
 export async function demoView(root) {
+  root.innerHTML = '<h1 class="title">Demo controls</h1><progress class="progress is-small is-primary" max="100"></progress>';
   let chaos;
   let products = [];
   try {
     [chaos, { products }] = await Promise.all([api.getChaos(), api.listProducts()]);
   } catch (err) {
-    root.innerHTML = notification(`Could not load demo controls: ${err.message}`);
+    showError(root, `Could not load demo controls: ${err.message}`, () => demoView(root));
     return;
   }
 
@@ -18,10 +20,14 @@ export async function demoView(root) {
     <div class="is-flex is-align-items-center mb-5" style="gap: 1rem">
       <button class="button is-danger" id="reset">Reset all</button>
       <div id="chaos-msg"></div>
+      <label class="checkbox ml-auto">
+        <input type="checkbox" id="showFooter" ${isFooterVisible() ? 'checked' : ''} />
+        Show session / trace footer
+      </label>
     </div>
 
-    <div class="columns">
-      <div class="column box mr-3 mb-0">
+    <div class="columns demo-columns">
+      <div class="column box mb-0">
         <h2 class="title is-5">Backend failures</h2>
         <div class="field">
           <label class="checkbox"><input type="checkbox" id="baselineLatency" ${chaos.baselineLatency ? 'checked' : ''} />
@@ -101,6 +107,8 @@ export async function demoView(root) {
       }
     }),
   );
+
+  root.querySelector('#showFooter').addEventListener('change', (e) => setFooterVisible(e.target.checked));
 
   root.querySelector('#reset').addEventListener('click', async () => {
     failures.resetFailures();

@@ -1,7 +1,7 @@
 const crypto = require('node:crypto');
 const express = require('express');
 const cors = require('cors');
-const { trace } = require('@opentelemetry/api');
+const { trace, context } = require('@opentelemetry/api');
 
 const { CURRENCY, products, productsById, carts, orders } = require('./data');
 const chaos = require('./chaos');
@@ -23,6 +23,29 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const app = express();
 app.use(express.json());
+
+// Request log: one line per API request, written when the response finishes. It runs inside
+// the request's trace context, so the line carries the trace ID (stdout and OTLP). Health
+// checks and CORS preflights are skipped as noise.
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS' || req.path === '/api/health') return next();
+  const started = process.hrtime.bigint();
+  const requestContext = context.active();
+  res.on('finish', () => {
+    const durationMs = Math.round(Number(process.hrtime.bigint() - started) / 1e5) / 10;
+    const { statusCode: status } = res;
+    const level = status >= 500 ? 'error' : status >= 400 ? 'warn' : 'info';
+    context.with(requestContext, () =>
+      logger[level](`${req.method} ${req.originalUrl} ${status} ${durationMs}ms`, {
+        method: req.method,
+        path: req.originalUrl,
+        status,
+        durationMs,
+      }),
+    );
+  });
+  next();
+});
 
 // The frontend is served from a different origin (different port), so the browser
 // enforces CORS. `traceparent` (W3C Trace Context) must be an allowed request header,

@@ -1,5 +1,5 @@
 import { api } from '../api.js';
-import { esc, money, notification } from '../util.js';
+import { esc, money, notification, showError } from '../util.js';
 
 export async function orderView(root, id) {
   root.innerHTML = '<progress class="progress is-small is-primary" max="100"></progress>';
@@ -14,6 +14,7 @@ export async function orderView(root, id) {
       <p class="mb-4"><strong>Total: ${money(order.totalCurrencyUnits, order.currency)}</strong></p>
       <a class="button is-primary" href="#/">Order something else</a>`;
   } catch (err) {
-    root.innerHTML = notification(err.message);
+    if (err.status === 404) root.innerHTML = notification(err.message);
+    else showError(root, err.message, () => orderView(root, id));
   }
 }

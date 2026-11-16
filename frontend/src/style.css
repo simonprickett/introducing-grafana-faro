@@ -21,3 +21,38 @@
 .product-card { overflow: hidden; }
 .product-card .card-footer { border-top: none; }
 .product-card .add-to-cart { border-radius: 0; height: 3em; font-weight: 600; }
+
+/* --- Demo footer (session + last trace) --- */
+.demo-footer {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+  display: flex; flex-wrap: wrap; gap: .25rem 1.5rem; align-items: center;
+  padding: .4rem 1rem; font-size: .8rem;
+  background: var(--bulma-scheme-main-bis); border-top: 1px solid var(--bulma-border-weak);
+  view-transition-name: demo-footer;
+}
+.demo-footer[hidden] { display: none; }
+.demo-footer code { margin: 0 .4rem; }
+.demo-footer .button { height: 1.8em; margin-right: .25rem; }
+body.has-demo-footer { padding-bottom: 3.5rem; }
+
+/* --- Cart badge pop --- */
+@keyframes bump { 0% { transform: scale(1); } 40% { transform: scale(1.5); } 100% { transform: scale(1); } }
+#cart-count.bump { animation: bump .35s ease; }
+
+/* --- Page transitions: keep the navbar still, crossfade the rest --- */
+.navbar { view-transition-name: navbar; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .18s; }
+@media (prefers-reduced-motion: reduce) {
+  #cart-count.bump { animation: none; }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
+
+/* Navbar follows the theme (it was fixed light); give it a subtle divider */
+.navbar { border-bottom: 1px solid var(--bulma-border-weak); }
+
+/* Footer IDs: Bulma's <code> is bright red, which is hard to read in dark mode */
+.demo-footer code { color: var(--bulma-text-strong); background: var(--bulma-scheme-main-ter); }
+
+/* Demo controls: keep the two boxes inside the page content width */
+.demo-columns { margin: 0; gap: 1.5rem; }
+.demo-columns > .column.box { padding: 1.25rem; }
