@@ -56,3 +56,39 @@ body.has-demo-footer { padding-bottom: 3.5rem; }
 /* Demo controls: keep the two boxes inside the page content width */
 .demo-columns { margin: 0; gap: 1.5rem; }
 .demo-columns > .column.box { padding: 1.25rem; }
+
+/* Clear (x) button inside text inputs */
+.has-clear { position: relative; }
+.has-clear .input { padding-right: 2.25rem; }
+.clear-btn {
+  position: absolute; right: .6rem; top: 50%; transform: translateY(-50%);
+  z-index: 4; /* Bulma lifts a focused input in a has-addons field to z-index 3 */
+  border: none; background: transparent; cursor: pointer;
+  color: var(--bulma-text-weak); font-size: 1.5rem; line-height: 1; padding: 0 .25rem;
+}
+.clear-btn:hover { color: var(--bulma-text-strong); }
+.clear-btn[hidden] { display: none; }
+/* Chrome/Safari draw their own clear button on type=search; ours replaces it */
+input[type=search]::-webkit-search-cancel-button { -webkit-appearance: none; display: none; }
+
+/* Cart quantity stepper: make the number clearly readable (is-static is muted by default) */
+.button.is-static.qty-value { color: var(--bulma-text-strong); font-weight: 600; min-width: 2.5em; justify-content: center; }
+
+/* --- Busy indicator: a slim animated bar under the navbar while API calls are in flight --- */
+.busy-bar {
+  position: fixed; top: var(--bulma-navbar-height, 3.25rem); left: 0; right: 0; height: 3px; z-index: 31;
+  overflow: hidden; opacity: 0; pointer-events: none; transition: opacity .15s ease;
+  view-transition-name: busy-bar;
+}
+.busy-bar::before {
+  content: ''; position: absolute; inset: 0; width: 40%;
+  background: var(--bulma-primary);
+  animation: busy-slide 1.1s ease-in-out infinite;
+}
+@keyframes busy-slide { 0% { left: -40%; } 100% { left: 100%; } }
+body.is-busy .busy-bar { opacity: 1; }
+body.is-busy { cursor: progress; }
+@media (prefers-reduced-motion: reduce) { .busy-bar::before { animation: none; width: 100%; opacity: .6; } }
+
+/* Spinner inside a loading button: Bulma's default is dark-on-teal and easy to miss */
+.button.is-loading::after { border-color: transparent transparent #fff #fff !important; }

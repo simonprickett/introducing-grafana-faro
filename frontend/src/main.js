@@ -10,9 +10,11 @@ import { cartView } from './views/cart.js';
 import { orderView } from './views/order.js';
 import { demoView } from './views/demo.js';
 import { initFooter } from './footer.js';
+import { initDemoIndicator } from './demoIndicator.js';
 
 startFaro();
 initFooter();
+initDemoIndicator();
 
 // Give each browser a stable, made-up identity so sessions can be told apart.
 const NAMES = ['alex', 'sam', 'jo', 'robin', 'casey', 'jamie', 'taylor', 'morgan'];

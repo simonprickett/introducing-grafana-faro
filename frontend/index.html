@@ -16,15 +16,16 @@
       <div class="navbar-menu is-active">
         <div class="navbar-start">
           <a class="navbar-item" href="#/" data-faro-user-action-name="open-menu" data-faro-user-action-timeout="1000">Menu</a>
-          <a class="navbar-item" href="#/demo">Demo controls</a>
+          <a class="navbar-item" id="demo-link" href="#/demo">Demo controls</a>
         </div>
         <div class="navbar-end">
           <a class="navbar-item" href="#/cart" data-faro-user-action-name="open-cart" data-faro-user-action-timeout="1000">
-            Cart&nbsp;<span id="cart-count" class="tag is-primary is-rounded">0</span>
+            🛒&nbsp;Cart&nbsp;<span id="cart-count" class="tag is-primary is-rounded">0</span>
           </a>
         </div>
       </div>
     </nav>
+    <div id="busy-bar" class="busy-bar" aria-hidden="true"></div>
     <main class="section"><div class="container" id="app"></div></main>
     <script type="module" src="/src/main.js"></script>
   </body>

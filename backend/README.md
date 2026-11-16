@@ -42,6 +42,7 @@ All bodies are JSON. Errors are `{ "error": "<message>" }` with the status noted
 | `GET /api/products/:id` | | `200 {currency, product}` | 404 |
 | `GET /api/cart/:cartId` | | `200 cart` (empty cart if unknown) | |
 | `POST /api/cart/:cartId/items` | `{productId, quantity=1}` | `201 cart` | 404 unknown product, 400 quantity not an integer 1 to 20, 409 out of stock |
+| `PATCH /api/cart/:cartId/items/:productId` | `{quantity}` sets the exact quantity; `0` removes the item | `200 cart` | 404 unknown product or item not in the cart, 400 quantity not an integer 0 to 99, 409 increasing past stock or for an out-of-stock product (decreasing is always allowed) |
 | `DELETE /api/cart/:cartId/items/:productId` | | `200 cart` | |
 | `POST /api/checkout` | `{cartId, name}` | `201 order` | 400 missing fields or empty cart, 409 out of stock, 500 payment failure |
 | `GET /api/orders/:id` | | `200 order` | 404 |
@@ -66,7 +67,7 @@ Docker Compose mounts the file read-only at `/seed/products.json` and sets `SEED
 
 ### CORS
 
-Allow origins from `FRONTEND_ORIGIN`, methods `GET, POST, DELETE, OPTIONS`, and request headers `content-type, traceparent, tracestate, baggage`. If `traceparent` is missing from the allowed headers the browser rejects the preflight and frontend-to-backend traces break.
+Allow origins from `FRONTEND_ORIGIN`, methods `GET, POST, PATCH, DELETE, OPTIONS`, and request headers `content-type, traceparent, tracestate, baggage`. If `traceparent` is missing from the allowed headers the browser rejects the preflight and frontend-to-backend traces break.
 
 ### Failure injection (`/api/chaos`)
 
@@ -104,4 +105,4 @@ What the demo relies on (names matter, because the README and any dashboards ref
 **Logs**
 - Every stdout JSON line should include `trace_id` and `span_id` when written inside a request, so `docker compose logs backend` can be searched by the trace ID shown in the frontend footer.
 - Emit OTLP log records while the request span is active, so they carry `trace_id` and `span_id`. Also print JSON lines to stdout so `docker compose logs backend` is useful.
-- Levels in use: `info` (listings, add to cart, order placed), `warn` (out of stock, slow call injected, chaos changed), `error` (checkout failed, unhandled error).
+- Levels in use: `info` (listings, add to cart, cart quantity changed, order placed), `warn` (out of stock, slow call injected, chaos changed), `error` (checkout failed, unhandled error).

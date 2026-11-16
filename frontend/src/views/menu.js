@@ -1,7 +1,7 @@
 import { api } from '../api.js';
 import { trackEvent, startUserAction } from '../faro.js';
 import * as failures from '../failures.js';
-import { esc, money, notification, flashMessage, showError, debounce, setCartCount, actionAttrs } from '../util.js';
+import { esc, money, notification, flashMessage, showError, debounce, setCartCount, actionAttrs, addClearButton } from '../util.js';
 
 const CATEGORIES = [
   ['', 'All'],
@@ -64,12 +64,20 @@ export async function menuView(root) {
     }
   }
 
-  root.querySelector('#search').addEventListener(
+  const searchInput = root.querySelector('#search');
+  addClearButton(searchInput, () => searchInput.dispatchEvent(new Event('input')));
+  searchInput.addEventListener(
     'input',
     debounce((e) => {
       q = e.target.value;
-      startUserAction('search', { query: q });
-      trackEvent('search', { query: q });
+      // Emptying the box (the x button, or deleting the text) is its own thing, not a search.
+      if (q === '') {
+        startUserAction('clear-search');
+        trackEvent('search_cleared');
+      } else {
+        startUserAction('search', { query: q });
+        trackEvent('search', { query: q });
+      }
       if (failures.beforeAction('search')) return;
       load();
     }, 300),

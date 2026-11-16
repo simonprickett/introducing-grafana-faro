@@ -12,6 +12,7 @@ function recordApiRequest(span, request, result) {
   const attrs = span.attributes ?? {};
   const url = String(attrs['url.full'] ?? attrs['http.url'] ?? '');
   if (url && !url.startsWith(config.apiUrl)) return;
+  if (url.includes('/api/chaos')) return; // demo control plane, not part of the shop flow
   lastRequest = {
     traceId: span.spanContext().traceId,
     method: String(attrs['http.request.method'] ?? attrs['http.method'] ?? request?.method ?? 'GET'),

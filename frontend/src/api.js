@@ -1,5 +1,6 @@
 import { config } from './config.js';
 import { reportError } from './faro.js';
+import { busyStart, busyEnd } from './busy.js';
 
 export class ApiError extends Error {
   constructor(message, status) {
@@ -10,6 +11,15 @@ export class ApiError extends Error {
 }
 
 async function request(method, path, body) {
+  busyStart();
+  try {
+    return await doRequest(method, path, body);
+  } finally {
+    busyEnd();
+  }
+}
+
+async function doRequest(method, path, body) {
   const url = `${config.apiUrl}/api${path}`;
   let res;
   try {
@@ -52,6 +62,9 @@ export const api = {
   getCart: () => request('GET', `/cart/${cartId()}`),
   addToCart: (productId, quantity = 1) =>
     request('POST', `/cart/${cartId()}/items`, { productId, quantity }),
+  // Set an exact quantity for an item in the cart. 0 removes it.
+  setQuantity: (productId, quantity) =>
+    request('PATCH', `/cart/${cartId()}/items/${encodeURIComponent(productId)}`, { quantity }),
   removeFromCart: (productId) =>
     request('DELETE', `/cart/${cartId()}/items/${encodeURIComponent(productId)}`),
   checkout: (name) => request('POST', '/checkout', { cartId: cartId(), name }),

@@ -53,7 +53,7 @@ app.use((req, res, next) => {
 app.use(
   cors({
     origin: ALLOWED_ORIGINS,
-    methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['content-type', 'traceparent', 'tracestate', 'baggage'],
     maxAge: 600,
   }),
@@ -163,6 +163,31 @@ app.post('/api/cart/:cartId/items', (req, res) => {
 
   logger.info('Added to cart', { cartId: req.params.cartId, productId, quantity });
   res.status(201).json(buildCartView(req.params.cartId));
+});
+
+// Set an exact quantity for an item already in the cart. 0 removes it.
+app.patch('/api/cart/:cartId/items/:productId', (req, res) => {
+  const { cartId, productId } = req.params;
+  const { quantity } = req.body ?? {};
+  const product = productsById.get(productId);
+  if (!product) throw new HttpError(404, `Product '${productId}' not found`);
+  if (!Number.isInteger(quantity) || quantity < 0 || quantity > 99) {
+    throw new HttpError(400, 'quantity must be an integer between 0 and 99');
+  }
+  const cart = carts.get(cartId);
+  const current = cart?.get(productId);
+  if (current === undefined) throw new HttpError(404, `${product.name} is not in the cart`);
+  // Only increases can run into stock limits; you can always take items out.
+  if (quantity > current && isOutOfStock(product, quantity)) {
+    logger.warn('Quantity change rejected: out of stock', { productId });
+    throw new HttpError(409, `${product.name} is out of stock`);
+  }
+
+  if (quantity === 0) cart.delete(productId);
+  else cart.set(productId, quantity);
+
+  logger.info('Cart quantity changed', { cartId, productId, from: current, to: quantity });
+  res.json(buildCartView(cartId));
 });
 
 app.delete('/api/cart/:cartId/items/:productId', (req, res) => {

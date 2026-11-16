@@ -2,6 +2,7 @@ import { api } from '../api.js';
 import * as failures from '../failures.js';
 import { esc, flashMessage, showError } from '../util.js';
 import { isFooterVisible, setFooterVisible } from '../footer.js';
+import { setBackendState, renderDemoIndicator } from '../demoIndicator.js';
 
 export async function demoView(root) {
   root.innerHTML = '<h1 class="title">Demo controls</h1><progress class="progress is-small is-primary" max="100"></progress>';
@@ -13,6 +14,8 @@ export async function demoView(root) {
     showError(root, `Could not load demo controls: ${err.message}`, () => demoView(root));
     return;
   }
+
+  setBackendState(chaos); // the server's state is the truth
 
   root.innerHTML = `
     <h1 class="title">Demo controls</h1>
@@ -100,7 +103,7 @@ export async function demoView(root) {
       // The share-of-calls control only makes sense while slow calls are switched on.
       root.querySelector('#slowCallRate').disabled = Number(root.querySelector('#slowCallLatencyMs').value) === 0;
       try {
-        await api.setChaos(read());
+        setBackendState(await api.setChaos(read()));
         flash('Saved');
       } catch (err) {
         flash(err.message, 'danger');
@@ -112,7 +115,7 @@ export async function demoView(root) {
 
   root.querySelector('#reset').addEventListener('click', async () => {
     failures.resetFailures();
-    await api.resetChaos();
+    setBackendState(await api.resetChaos());
     demoView(root);
   });
 
@@ -157,6 +160,7 @@ export async function demoView(root) {
     failures.updateSetting(type, {
       [field]: field === 'enabled' ? e.target.checked : Number(e.target.value),
     });
+    renderDemoIndicator();
     if (field === 'enabled') renderPanel(); // re-render so the rate select enables/disables
     flash('Saved');
   });

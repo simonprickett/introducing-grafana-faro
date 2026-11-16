@@ -41,6 +41,8 @@ export function showError(el, message, onRetry) {
 // A small status pill (e.g. "Saved", "Latte added to your cart") that fades out after a moment.
 // Re-calling it on the same element restarts the timers rather than stacking messages.
 export function flashMessage(el, text, kind = 'success', holdMs) {
+  // The user may have navigated away while the request was in flight; nothing to show then.
+  if (!el?.isConnected) return;
   (el._flashTimers ?? []).forEach(clearTimeout);
   const mark = kind === 'success' ? '&#10003; ' : '';
   el.innerHTML = `<span class="tag is-${kind} is-medium flash">${mark}${esc(text)}</span>`;
@@ -55,3 +57,25 @@ export function flashMessage(el, text, kind = 'success', holdMs) {
 // which is *before* the click handler fires its API call, so we allow up to 1 s (the maximum)
 // for the first request or DOM change instead of the 100 ms default.
 export const actionAttrs = (name) => `data-faro-user-action-name="${name}" data-faro-user-action-timeout="1000"`;
+
+// Adds a clear (x) button inside a text input's `.control`. It only shows while the input has
+// text. After setting `input.value` from code, dispatch an `input` event to update it.
+export function addClearButton(input, onClear) {
+  const control = input.closest('.control');
+  control.classList.add('has-clear');
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'clear-btn';
+  btn.setAttribute('aria-label', 'Clear');
+  btn.innerHTML = '&times;';
+  const sync = () => (btn.hidden = !input.value);
+  sync();
+  control.append(btn);
+  input.addEventListener('input', sync);
+  btn.addEventListener('click', () => {
+    input.value = '';
+    sync();
+    input.focus();
+    onClear?.();
+  });
+}

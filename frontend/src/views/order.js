@@ -6,7 +6,7 @@ export async function orderView(root, id) {
   try {
     const order = await api.getOrder(id);
     root.innerHTML = `
-      <h1 class="title">Thanks, ${esc(order.name)}!</h1>
+      <h1 class="title">😊 Thanks, ${esc(order.name)}!</h1>
       <p class="subtitle">Order <strong>${esc(order.id)}</strong> is being prepared.</p>
       <ul class="mb-4">${order.items
         .map((i) => `<li>${i.quantity} × ${esc(i.name)} — ${money(i.lineTotalCurrencyUnits, order.currency)}</li>`)
