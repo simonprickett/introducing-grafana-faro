@@ -25,3 +25,16 @@ export const setCartCount = (n) => {
   const el = document.getElementById('cart-count');
   if (el) el.textContent = String(n);
 };
+
+// A small status pill (e.g. "Saved", "Latte added to your cart") that fades out after a moment.
+// Re-calling it on the same element restarts the timers rather than stacking messages.
+export function flashMessage(el, text, kind = 'success', holdMs) {
+  (el._flashTimers ?? []).forEach(clearTimeout);
+  const mark = kind === 'success' ? '&#10003; ' : '';
+  el.innerHTML = `<span class="tag is-${kind} is-medium flash">${mark}${esc(text)}</span>`;
+  const hold = holdMs ?? (kind === 'success' ? 1500 : 5000);
+  el._flashTimers = [
+    setTimeout(() => el.firstElementChild?.classList.add('is-fading'), hold),
+    setTimeout(() => (el.innerHTML = ''), hold + 500),
+  ];
+}

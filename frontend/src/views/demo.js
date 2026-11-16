@@ -1,6 +1,6 @@
 import { api } from '../api.js';
-import { reportError } from '../faro.js';
-import { esc, notification } from '../util.js';
+import * as failures from '../failures.js';
+import { esc, notification, flashMessage } from '../util.js';
 
 export async function demoView(root) {
   let chaos;
@@ -15,9 +15,13 @@ export async function demoView(root) {
   root.innerHTML = `
     <h1 class="title">Demo controls</h1>
     <p class="subtitle">Break things on purpose so there is something to look at in Grafana.</p>
+    <div class="is-flex is-align-items-center mb-5" style="gap: 1rem">
+      <button class="button is-danger" id="reset">Reset all</button>
+      <div id="chaos-msg"></div>
+    </div>
 
     <div class="columns">
-      <div class="column box mr-3">
+      <div class="column box mr-3 mb-0">
         <h2 class="title is-5">Backend failures</h2>
         <div class="field">
           <label class="checkbox"><input type="checkbox" id="baselineLatency" ${chaos.baselineLatency ? 'checked' : ''} />
@@ -37,7 +41,7 @@ export async function demoView(root) {
         </div>
         <div class="field">
           <label class="label">...applied to this share of API calls</label>
-          <div class="select"><select id="slowCallRate">
+          <div class="select"><select id="slowCallRate" ${chaos.slowCallLatencyMs ? '' : 'disabled'}>
             ${[0.1, 0.25, 0.5, 1]
               .map((r) => `<option value="${r}" ${chaos.slowCallRate === r ? 'selected' : ''}>${r * 100}%</option>`)
               .join('')}
@@ -60,23 +64,22 @@ export async function demoView(root) {
               .join('')}
           </select></div>
         </div>
-        <button class="button is-light" id="reset">Reset all</button>
-        <div id="chaos-msg" class="mt-3"></div>
       </div>
 
-      <div class="column box">
+      <div class="column box mb-0">
         <h2 class="title is-5">Frontend failures</h2>
-        <div class="buttons is-flex-direction-column is-align-items-flex-start">
-          <button class="button is-danger is-light" id="throw">Throw an uncaught exception</button>
-          <button class="button is-danger is-light" id="reject">Unhandled promise rejection</button>
-          <button class="button is-danger is-light" id="handled">Report a handled error</button>
-          <button class="button is-danger is-light" id="image">Load a broken image</button>
-        </div>
-        <div id="broken-image"></div>
+        <p class="help mb-3">
+          Applies to this browser only. When on, each failure fires at random as you use the coffee
+          flow. Uncaught exceptions leave the action stuck (reload to recover).
+        </p>
+        <div id="frontend-panel"></div>
+        <div id="fire-output" class="mt-3"></div>
       </div>
     </div>`;
 
   const msg = root.querySelector('#chaos-msg');
+
+  const flash = (text, kind) => flashMessage(msg, text, kind);
   const read = () => ({
     baselineLatency: root.querySelector('#baselineLatency').checked,
     checkoutFailure: root.querySelector('#checkoutFailure').checked,
@@ -88,35 +91,74 @@ export async function demoView(root) {
 
   root.querySelectorAll('#baselineLatency, #checkoutFailure, select').forEach((el) =>
     el.addEventListener('change', async () => {
+      // The share-of-calls control only makes sense while slow calls are switched on.
+      root.querySelector('#slowCallRate').disabled = Number(root.querySelector('#slowCallLatencyMs').value) === 0;
       try {
         await api.setChaos(read());
-        msg.innerHTML = notification('Saved.', 'success');
+        flash('Saved');
       } catch (err) {
-        msg.innerHTML = notification(err.message);
+        flash(err.message, 'danger');
       }
     }),
   );
 
   root.querySelector('#reset').addEventListener('click', async () => {
+    failures.resetFailures();
     await api.resetChaos();
     demoView(root);
   });
 
-  // --- Frontend failures. Faro's error instrumentation catches the first two automatically.
-  root.querySelector('#throw').addEventListener('click', () => {
-    throw new Error('Demo: uncaught exception from the "Throw" button');
+  // --- Frontend failures -------------------------------------------------------------
+  const ROWS = [
+    ['uncaught', 'Uncaught exceptions', 'Breaks the action: add to cart, search or checkout stops dead'],
+    ['rejection', 'Unhandled promise rejections', 'Action succeeds but the UI never updates (stale cart badge)'],
+    ['handled', 'Handled errors', 'Caught and reported to Faro; shows a warning fallback'],
+    ['image', 'Broken images', 'Some product images 404'],
+  ];
+  const panel = root.querySelector('#frontend-panel');
+  const output = root.querySelector('#fire-output');
+
+  function renderPanel() {
+    const settings = failures.getSettings();
+    const stats = failures.getStats();
+    panel.innerHTML = ROWS.map(([type, label, hint]) => {
+      const last = stats[type].last;
+      return `
+        <div class="field mb-4">
+          <label class="checkbox has-text-weight-semibold">
+            <input type="checkbox" data-type="${type}" data-field="enabled" ${settings[type].enabled ? 'checked' : ''} /> ${label}
+          </label>
+          <p class="help">${hint}</p>
+          <div class="is-flex is-align-items-center mt-1" style="gap:.5rem">
+            <div class="select is-small"><select data-type="${type}" data-field="rate" ${settings[type].enabled ? '' : 'disabled'}>
+              ${[0.1, 0.25, 0.5, 1]
+                .map((r) => `<option value="${r}" ${settings[type].rate === r ? 'selected' : ''}>${r * 100}%</option>`)
+                .join('')}
+            </select></div>
+            <button class="button is-small is-danger is-light" data-fire="${type}">Fire now</button>
+            <span class="tag is-light">${stats[type].count} fired</span>
+          </div>
+          ${last ? `<p class="help">Last: ${esc(last.message)} <em>(${esc(last.where)}, ${esc(last.at)})</em></p>` : ''}
+        </div>`;
+    }).join('');
+  }
+
+  panel.addEventListener('change', (e) => {
+    const { type, field } = e.target.dataset;
+    if (!type) return;
+    failures.updateSetting(type, {
+      [field]: field === 'enabled' ? e.target.checked : Number(e.target.value),
+    });
+    if (field === 'enabled') renderPanel(); // re-render so the rate select enables/disables
+    flash('Saved');
   });
-  root.querySelector('#reject').addEventListener('click', () => {
-    Promise.reject(new Error('Demo: unhandled promise rejection'));
+
+  panel.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-fire]');
+    if (!btn) return;
+    output.innerHTML = failures.fireNow(btn.dataset.fire);
+    renderPanel();
   });
-  root.querySelector('#handled').addEventListener('click', () => {
-    try {
-      JSON.parse('{ not valid json');
-    } catch (err) {
-      reportError(err, { where: 'demo-handled-error' });
-    }
-  });
-  root.querySelector('#image').addEventListener('click', () => {
-    root.querySelector('#broken-image').innerHTML = `<img src="/img/does-not-exist.svg?${Date.now()}" alt="broken" />`;
-  });
+
+  renderPanel();
 }

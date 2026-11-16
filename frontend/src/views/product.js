@@ -1,6 +1,7 @@
 import { api } from '../api.js';
 import { trackEvent } from '../faro.js';
-import { esc, money, notification, setCartCount } from '../util.js';
+import * as failures from '../failures.js';
+import { esc, money, notification, flashMessage, setCartCount } from '../util.js';
 
 export async function productView(root, id) {
   root.innerHTML = '<progress class="progress is-small is-primary" max="100"></progress>';
@@ -9,8 +10,9 @@ export async function productView(root, id) {
     trackEvent('view_product', { productId: p.id });
     root.innerHTML = `
       <p class="mb-4"><a href="#/">&larr; Back to menu</a></p>
+      ${failures.handledFallback('product')}
       <div class="columns product-detail">
-        <div class="column is-4"><img src="${esc(p.image)}" alt="${esc(p.name)}" /></div>
+        <div class="column is-4"><img src="${esc(failures.imageSrc(p, 'product'))}" alt="${esc(p.name)}" /></div>
         <div class="column">
           <h1 class="title">${esc(p.name)}</h1>
           <p class="subtitle">${money(p.priceCurrencyUnits, currency)}</p>
@@ -23,13 +25,15 @@ export async function productView(root, id) {
     root.querySelector('#add').addEventListener('click', async (e) => {
       const btn = e.currentTarget;
       btn.classList.add('is-loading');
+      if (failures.beforeAction('add-to-cart')) return;
       try {
         const cart = await api.addToCart(p.id);
         trackEvent('add_to_cart', { productId: p.id, source: 'detail' });
+        if (failures.afterAction('add-to-cart')) return;
         setCartCount(cart.items.reduce((n, i) => n + i.quantity, 0));
-        root.querySelector('#msg').innerHTML = notification(`${p.name} added to your cart.`, 'success');
+        flashMessage(root.querySelector('#msg'), 'Added to cart', 'success', 2500);
       } catch (err) {
-        root.querySelector('#msg').innerHTML = notification(err.message);
+        flashMessage(root.querySelector('#msg'), err.message, 'danger');
       } finally {
         btn.classList.remove('is-loading');
       }

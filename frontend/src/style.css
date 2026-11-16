@@ -2,5 +2,22 @@
 .product-detail img { width: 100%; max-width: 320px; background: #faf6f0; border-radius: 6px; }
 .card-footer-item { cursor: pointer; }
 .cart-img { width: 48px; height: 48px; vertical-align: middle; margin-right: .5rem; }
-.feedback .notification { padding: .5rem .75rem; }
+.price-row {
+  display: flex; align-items: center; justify-content: space-between; gap: .5rem;
+  min-height: 2.25rem;       /* always tall enough for the pill, so the card never changes height */
+  margin-top: -1.5rem;       /* tuck up under the name, as a bare subtitle would */
+}
+.feedback .flash { font-size: .85rem; white-space: nowrap; height: auto; padding: .3em .7em; }
 #msg:empty { display: none; }
+.flash { transition: opacity .4s ease; }
+.flash.is-fading { opacity: 0; }
+
+/* Product names follow the theme: near-white in dark mode, near-black in light mode */
+.product-card .title a,
+.product-detail .title { color: var(--bulma-text-strong); }
+.product-card .title a:hover { text-decoration: underline; }
+
+/* "Add to cart" as a full-width coloured bar across the bottom of the card */
+.product-card { overflow: hidden; }
+.product-card .card-footer { border-top: none; }
+.product-card .add-to-cart { border-radius: 0; height: 3em; font-weight: 600; }

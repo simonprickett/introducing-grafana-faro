@@ -1,5 +1,6 @@
 import { api, resetCartId } from '../api.js';
 import { trackEvent, trackMeasurement } from '../faro.js';
+import * as failures from '../failures.js';
 import { esc, money, notification, setCartCount } from '../util.js';
 
 export async function cartView(root) {
@@ -63,9 +64,11 @@ export async function cartView(root) {
       const btn = e.currentTarget.querySelector('button[type=submit]');
       btn.classList.add('is-loading');
       trackEvent('checkout_started', { items: cart.items.length, totalCurrencyUnits: cart.totalCurrencyUnits });
+      if (failures.beforeAction('checkout')) return;
       try {
         const order = await api.checkout(root.querySelector('#name').value);
         trackEvent('order_placed', { orderId: order.id });
+        if (failures.afterAction('checkout')) return;
         trackMeasurement('order', { total_currency_units: order.totalCurrencyUnits, items: order.items.length });
         resetCartId();
         setCartCount(0);

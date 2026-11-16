@@ -74,12 +74,12 @@ Open **Demo controls** in the app (`/#/demo`).
 | Slow API calls (latency + % of calls) | A share of requests (any endpoint) are delayed by roughly the chosen time, ±25%, in a `chaos.slow_call` span. Shows up as a latency tail and slow traces in the waterfall |
 | Out of stock product | 409 on add-to-cart / checkout — a business error rather than a crash |
 | Random API errors | A percentage of all requests return 503 — shows up as an error rate |
-| Uncaught exception | Faro exception with stack trace (source maps are generated at build time) |
-| Unhandled promise rejection | Faro error from a different source |
-| Handled error | Reported manually with `faro.api.pushError` |
-| Broken image | Resource failure, reported via a capturing `error` listener |
+| Uncaught exceptions (frontend, toggle + %) | A real `TypeError` thrown at the start of add to cart / search / checkout. **Breaks the flow**: the button spins forever and nothing happens (reload to recover). Faro captures an exception with a stack trace (source maps are generated at build time) |
+| Unhandled promise rejections (frontend, toggle + %) | Fires *after* the action succeeds, so the UI never updates, e.g. the item is in the cart on the server but the badge is stale, or an order is placed but the page never moves on. Faro captures a different error type |
+| Handled errors (frontend, toggle + %) | A caught parse error reported with `faro.api.pushError`, plus a visible warning fallback in the UI ("We couldn't restore your saved filters...") |
+| Broken images (frontend, toggle + %) | A share of product images 404, reported via a capturing `error` listener |
 
-The same controls are available over HTTP: `GET/POST/DELETE /api/chaos`.
+The backend controls are available over HTTP: `GET/POST/DELETE /api/chaos`. The frontend failures apply to the browser they're set in (settings are kept in `localStorage`, counters in `sessionStorage`). Each has a **Fire now** button for when you want one immediately, and a counter showing what has fired.
 
 ## Why is CORS configured?
 
