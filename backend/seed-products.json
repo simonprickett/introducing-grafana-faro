@@ -1,0 +1,74 @@
+[
+  {
+    "id": "espresso",
+    "name": "Espresso",
+    "category": "coffee",
+    "priceCurrencyUnits": 300,
+    "description": "A short, intense shot.",
+    "image": "/img/espresso.svg",
+    "stock": 25
+  },
+  {
+    "id": "americano",
+    "name": "Americano",
+    "category": "coffee",
+    "priceCurrencyUnits": 350,
+    "description": "Espresso topped up with hot water.",
+    "image": "/img/americano.svg",
+    "stock": 25
+  },
+  {
+    "id": "latte",
+    "name": "Latte",
+    "category": "coffee",
+    "priceCurrencyUnits": 450,
+    "description": "Espresso with plenty of steamed milk.",
+    "image": "/img/latte.svg",
+    "stock": 25
+  },
+  {
+    "id": "cappuccino",
+    "name": "Cappuccino",
+    "category": "coffee",
+    "priceCurrencyUnits": 425,
+    "description": "Equal parts espresso, milk and foam.",
+    "image": "/img/cappuccino.svg",
+    "stock": 25
+  },
+  {
+    "id": "flat-white",
+    "name": "Flat White",
+    "category": "coffee",
+    "priceCurrencyUnits": 450,
+    "description": "Velvety microfoam over a double shot.",
+    "image": "/img/flat-white.svg",
+    "stock": 25
+  },
+  {
+    "id": "cold-brew",
+    "name": "Cold Brew",
+    "category": "cold",
+    "priceCurrencyUnits": 475,
+    "description": "Steeped for 18 hours, served over ice.",
+    "image": "/img/cold-brew.svg",
+    "stock": 25
+  },
+  {
+    "id": "croissant",
+    "name": "Croissant",
+    "category": "pastry",
+    "priceCurrencyUnits": 375,
+    "description": "Buttery and flaky, baked this morning.",
+    "image": "/img/croissant.svg",
+    "stock": 25
+  },
+  {
+    "id": "blueberry-muffin",
+    "name": "Blueberry Muffin",
+    "category": "pastry",
+    "priceCurrencyUnits": 350,
+    "description": "Packed with blueberries.",
+    "image": "/img/blueberry-muffin.svg",
+    "stock": 25
+  }
+]

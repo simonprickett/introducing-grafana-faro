@@ -1,10 +1,12 @@
 services:
   backend:
-    build: ./backend
+    # Which backend implementation to run: a folder under ./backend (default: nodejs)
+    build: ./backend/${BACKEND:-nodejs}
     ports:
       - "3000:3000"
     environment:
       PORT: 3000
+      SEED_PRODUCTS_FILE: /seed/products.json
       CURRENCY: ${CURRENCY:-GBP}
       # Origin(s) of the frontend, as the *browser* sees it (used for CORS).
       FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:8080}
@@ -16,6 +18,9 @@ services:
     extra_hosts:
       # Lets the container reach an LGTM stack published on the host (needed on Linux).
       - "host.docker.internal:host-gateway"
+    volumes:
+      # The menu is shared by every backend implementation.
+      - ./backend/seed-products.json:/seed/products.json:ro
 
   frontend:
     build: ./frontend

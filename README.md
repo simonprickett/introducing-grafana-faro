@@ -24,6 +24,8 @@ docker compose up --build
 - Frontend: http://localhost:8080
 - API: http://localhost:3000/api/products
 
+The backend implementation is chosen with `BACKEND` (default `nodejs`, the only one so far). The API and telemetry contract that every implementation follows is in [`backend/README.md`](backend/README.md).
+
 Faro and OTLP telemetry is sent to wherever you point it (see below). If nothing is listening, the app still works; the telemetry is just dropped. Set `FARO_URL=` (empty) to disable Faro completely.
 
 ## Configuration
@@ -48,7 +50,7 @@ Typical targets:
 
 ## Currency
 
-The currency is set with `CURRENCY` (an ISO 4217 code, default `GBP`). It relabels prices; it does **not** convert them. Prices in [`backend/src/data.js`](backend/src/data.js) are integers in the currency's smallest unit (`priceCurrencyUnits`), so `450` is £4.50 for GBP.
+The currency is set with `CURRENCY` (an ISO 4217 code, default `GBP`). It relabels prices; it does **not** convert them. Prices in [`backend/seed-products.json`](backend/seed-products.json) are integers in the currency's smallest unit (`priceCurrencyUnits`), so `450` is £4.50 for GBP.
 
 The frontend ([`money()` in `frontend/src/util.js`](frontend/src/util.js)) asks `Intl.NumberFormat` how many decimal places the currency has, so zero-decimal currencies work too. With `CURRENCY=JPY` the same `450` is shown as **¥450**, not ¥4.50. Symbols and separators follow the browser's locale.
 
@@ -86,13 +88,14 @@ The backend controls are available over HTTP: `GET/POST/DELETE /api/chaos`. The 
 The frontend (`:8080`) and API (`:3000`) are different origins on purpose. Two things must be true for the trace to join up, and forgetting either is a common gotcha:
 
 1. **Frontend:** `propagateTraceHeaderCorsUrls` in the `TracingInstrumentation` config must include the API origin ([`frontend/src/faro.js`](frontend/src/faro.js)), otherwise the browser SDK will not add the `traceparent` header to cross-origin requests.
-2. **Backend:** CORS must list `traceparent` (and `tracestate`, `baggage`) in the allowed headers ([`backend/src/server.js`](backend/src/server.js)), otherwise the browser rejects the preflight.
+2. **Backend:** CORS must list `traceparent` (and `tracestate`, `baggage`) in the allowed headers ([`backend/nodejs/src/server.js`](backend/nodejs/src/server.js)), otherwise the browser rejects the preflight.
 
 ## Project layout
 
 ```
-backend/     Express API, OpenTelemetry setup (src/instrumentation.js), chaos controls
-frontend/    Vanilla JS + Bulma, built with Vite; server.js is a tiny static server
+backend/            One folder per backend implementation, all with the same API (see backend/README.md)
+  nodejs/           Express API, OpenTelemetry setup (src/instrumentation.js), chaos controls
+frontend/           Vanilla JS + Bulma, built with Vite; server.js is a tiny static server
 docker-compose.yml
 .env.example
 ```
@@ -101,7 +104,7 @@ docker-compose.yml
 
 ```sh
 # backend
-cd backend && npm install && npm run dev
+cd backend/nodejs && npm install && npm run dev
 # frontend (Vite dev server on :5173; edit public/config.js for URLs)
 cd frontend && npm install && npm run dev
 ```
