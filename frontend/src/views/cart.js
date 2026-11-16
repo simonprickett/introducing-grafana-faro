@@ -1,6 +1,7 @@
 import { api, resetCartId } from '../api.js';
 import { trackEvent, trackMeasurement } from '../faro.js';
 import * as failures from '../failures.js';
+import { randomName } from '../names.js';
 import { esc, money, notification, setCartCount } from '../util.js';
 
 export async function cartView(root) {
@@ -43,7 +44,10 @@ export async function cartView(root) {
           <label class="label" for="name">Name for the order</label>
           <div class="control"><input id="name" class="input" required placeholder="e.g. Alex" /></div>
         </div>
-        <button class="button is-primary" type="submit">Place order</button>
+        <div class="buttons">
+          <button class="button is-info" type="button" id="generate-name">Generate name</button>
+          <button class="button is-primary" type="submit">Place order</button>
+        </div>
         <p class="help mt-2">This is a demo - no real payment is taken.</p>
       </form>`;
 
@@ -58,6 +62,13 @@ export async function cartView(root) {
         }
       }),
     );
+
+    // Saves typing during a demo: fill in a random name from the hard-coded lists.
+    root.querySelector('#generate-name').addEventListener('click', () => {
+      const input = root.querySelector('#name');
+      input.value = randomName();
+      input.focus();
+    });
 
     root.querySelector('#checkout').addEventListener('submit', async (e) => {
       e.preventDefault();
