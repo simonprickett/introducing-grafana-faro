@@ -1,0 +1,15 @@
+.DS_Store
+.vscode/
+*.swp
+*.tmp
+*.bak
+*.log
+node_modules/
+
+# Local environment / secrets
+.env
+.env.*
+!.env.example
+
+# Build output
+dist/

@@ -1,0 +1,24 @@
+{
+  "name": "coffee-cart-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Coffee cart demo UI instrumented with Grafana Faro",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@grafana/faro-web-sdk": "^2.14.0",
+    "@grafana/faro-web-tracing": "^2.14.0",
+    "bulma": "^1.0.4",
+    "express": "^5.3.0"
+  },
+  "devDependencies": {
+    "vite": "^8.3.8"
+  }
+}
