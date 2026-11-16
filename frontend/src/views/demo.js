@@ -125,6 +125,7 @@ export async function demoView(root) {
     ['rejection', 'Unhandled promise rejections', 'Action succeeds but the UI never updates (stale cart badge)'],
     ['handled', 'Handled errors', 'Caught and reported to Faro; shows a warning fallback'],
     ['image', 'Broken images', 'Some product images 404'],
+    ['unresponsive', 'Unresponsive buttons', 'Add to cart, + / − and Place order silently ignore clicks: no spinner, no request, no error'],
   ];
   const panel = root.querySelector('#frontend-panel');
   const output = root.querySelector('#fire-output');

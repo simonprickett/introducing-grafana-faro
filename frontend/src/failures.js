@@ -10,11 +10,13 @@
 //                updates (e.g. item added on the server but the cart badge is stale).
 //   handled    - an error that is caught and reported to Faro, with a visible fallback notice.
 //   image      - a product image that 404s.
+//   unresponsive - a button that silently does nothing: no spinner, no request, no error. Gives
+//                Faro dead clicks, and rage clicks if the user keeps clicking.
 
 import { reportError } from './faro.js';
 import { notification } from './util.js';
 
-export const TYPES = ['uncaught', 'rejection', 'handled', 'image'];
+export const TYPES = ['uncaught', 'rejection', 'handled', 'image', 'unresponsive'];
 const DEFAULT_RATE = 0.25;
 
 const SETTINGS_KEY = 'frontendFailures';
@@ -122,6 +124,17 @@ const FALLBACKS = {
   'demo-page': 'Something went wrong, but the app recovered (handled error reported to Faro).',
 };
 
+/**
+ * Call FIRST in a click handler, before showing any spinner. If it returns true the caller must
+ * return immediately: the click is swallowed without any visible reaction (no DOM change, no
+ * request, no error), which is exactly what Faro reports as a dead click.
+ */
+export function unresponsive(where) {
+  if (!roll('unresponsive')) return false;
+  record('unresponsive', where, 'click silently ignored');
+  return true;
+}
+
 /** Returns HTML for a visible warning if a handled error fired, otherwise ''. */
 export function handledFallback(where, force = false) {
   if (!force && !roll('handled')) return '';
@@ -159,6 +172,12 @@ export function fireNow(type) {
     return notification('Unhandled promise rejection raised. Check the browser console and Faro.', 'info');
   }
   if (type === 'handled') return handledFallback('demo-page', true);
+  if (type === 'unresponsive') {
+    record('unresponsive', 'demo-page', 'click silently ignored');
+    // A button with no handler: click it (or hammer it) to see dead and rage clicks.
+    return `<button class="button is-primary">Add to cart</button>
+      <p class="help mt-2">This button does nothing. Click it once for a dead click, or several times quickly for a rage click.</p>`;
+  }
   if (type === 'image') {
     const src = `/img/does-not-exist-${Date.now()}.svg`;
     record('image', 'demo-page', `404 ${src}`);

@@ -91,8 +91,25 @@ Open **Demo controls** in the app (`/#/demo`).
 | Unhandled promise rejections (frontend, toggle + %) | Fires *after* the action succeeds, so the UI never updates, e.g. the item is in the cart on the server but the badge is stale, or an order is placed but the page never moves on. Faro captures a different error type |
 | Handled errors (frontend, toggle + %) | A caught parse error reported with `faro.api.pushError`, plus a visible warning fallback in the UI ("We couldn't restore your saved filters...") |
 | Broken images (frontend, toggle + %) | A share of product images 404, reported via a capturing `error` listener |
+| Unresponsive buttons (frontend, toggle + %) | Add to cart, the + / − steppers and Place order silently ignore a click: no spinner, no request, no error. Produces Faro **dead clicks**, and **rage clicks** if the user keeps clicking (see below) |
 
 The backend controls are available over HTTP: `GET/POST/DELETE /api/chaos`. The frontend failures apply to the browser they're set in (settings are kept in `localStorage`, counters in `sessionStorage`). Each has a **Fire now** button for when you want one immediately, and a counter showing what has fired.
+
+## Frustration signals
+
+Faro's frustration instrumentation is on by default and reports three events (ordinary clicks produce nothing). Every one carries the clicked element's tag (`target`), the click coordinates, and `userActionName` when the element is inside a tagged action.
+
+| Event | Fires when | How to trigger it here |
+|---|---|---|
+| `faro.frustration.error_click` | A click is followed by an uncaught error or unhandled rejection | Tick **Uncaught exceptions** (or **Unhandled promise rejections**) in Demo controls and click Add to cart |
+| `faro.frustration.rage_click` | 3 or more clicks on the same element within 1 s and 100 px | Tick **Unresponsive buttons** and click Add to cart several times quickly. Or set **Slow API calls** to +5 s on 100% and click Add to cart repeatedly while it spins (only one request is sent; the rest are ignored) |
+| `faro.frustration.dead_click` | A click gets no reaction within 100 ms (no DOM change, request, resource load, input or scroll) | Tick **Unresponsive buttons** and click once. Clicking plain text, such as a heading, also counts |
+
+Notes:
+- The thresholds (3 clicks, 1 s, 100 px, 100 ms) are fixed in the SDK and can't be configured in this version.
+- Dead clicks fire on *any* click that does nothing, including clicking blank space to point something out, so expect a little noise.
+- While a button is busy it still receives clicks (the handlers ignore them), so repeat clicks are attributed to the button and its user action rather than to whatever is behind it.
+- Each type's **Fire now** button works too. For Unresponsive buttons it shows a dummy button that does nothing.
 
 ## Why is CORS configured?
 

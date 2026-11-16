@@ -24,6 +24,8 @@ export async function productView(root, id) {
 
     root.querySelector('#add').addEventListener('click', async (e) => {
       const btn = e.currentTarget;
+      if (btn.classList.contains('is-loading')) return; // a request is already in flight
+      if (failures.unresponsive('add-to-cart')) return;
       btn.classList.add('is-loading');
       if (failures.beforeAction('add-to-cart')) return;
       try {

@@ -101,6 +101,8 @@ export async function menuView(root) {
     const btn = e.target.closest('.add-to-cart');
     if (!btn) return;
     const card = btn.closest('.card');
+    if (btn.classList.contains('is-loading')) return; // a request is already in flight
+    if (failures.unresponsive('add-to-cart')) return;
     btn.classList.add('is-loading');
     if (failures.beforeAction('add-to-cart')) return;
     try {

@@ -82,6 +82,8 @@ export async function cartView(root) {
     // + / - buttons. Going down to 0 removes the item (the server treats 0 as "remove").
     root.querySelectorAll('.qty').forEach((btn) =>
       btn.addEventListener('click', async () => {
+        if (btn.classList.contains('is-loading')) return; // a request is already in flight
+        if (failures.unresponsive('quantity')) return;
         const productId = btn.dataset.id;
         const to = Number(btn.dataset.quantity);
         const from = cart.items.find((i) => i.product.id === productId).quantity;
@@ -119,9 +121,11 @@ export async function cartView(root) {
 
     root.querySelector('#checkout').addEventListener('submit', async (e) => {
       e.preventDefault();
+      const btn = e.currentTarget.querySelector('button[type=submit]');
+      if (btn.classList.contains('is-loading')) return; // already submitting
+      if (failures.unresponsive('checkout')) return;
       // Programmatic (not a data attribute) so that pressing Enter in the name box counts too.
       startUserAction('place-order', { items: cart.items.length });
-      const btn = e.currentTarget.querySelector('button[type=submit]');
       btn.classList.add('is-loading');
       trackEvent('checkout_started', { items: cart.items.length, totalCurrencyUnits: cart.totalCurrencyUnits });
       if (failures.beforeAction('checkout')) return;

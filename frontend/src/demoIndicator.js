@@ -26,6 +26,7 @@ function describeActive() {
     rejection: 'unhandled rejections',
     handled: 'handled errors',
     image: 'broken images',
+    unresponsive: 'unresponsive buttons',
   };
   const settings = failures.getSettings();
   for (const type of failures.TYPES) {

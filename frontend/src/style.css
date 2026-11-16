@@ -92,3 +92,8 @@ body.is-busy { cursor: progress; }
 
 /* Spinner inside a loading button: Bulma's default is dark-on-teal and easy to miss */
 .button.is-loading::after { border-color: transparent transparent #fff #fff !important; }
+
+/* A busy button still receives clicks (the handlers ignore them) rather than letting them fall
+   through to whatever is behind it. That keeps repeat clicks attributed to the button (and its
+   Faro user action) in frustration signals, e.g. rage clicks on a slow "Add to cart". */
+.button.is-loading { pointer-events: auto; cursor: progress; }
