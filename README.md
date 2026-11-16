@@ -69,8 +69,9 @@ Open **Demo controls** in the app (`/#/demo`).
 
 | Control | Signal |
 |---|---|
+| Realistic baseline latency (on by default) | Not a failure: a random 5-60 ms delay on every API call so durations vary naturally instead of a flat ~2 ms. Switch off for a perfectly even baseline |
 | Checkout fails | 500 from `payment.process`: error span, error log, Faro error and `checkout_failed` event |
-| Slow menu | Visible latency in the trace waterfall |
+| Slow API calls (latency + % of calls) | A share of requests (any endpoint) are delayed by roughly the chosen time, ±25%, in a `chaos.slow_call` span. Shows up as a latency tail and slow traces in the waterfall |
 | Out of stock product | 409 on add-to-cart / checkout — a business error rather than a crash |
 | Random API errors | A percentage of all requests return 503 — shows up as an error rate |
 | Uncaught exception | Faro exception with stack trace (source maps are generated at build time) |

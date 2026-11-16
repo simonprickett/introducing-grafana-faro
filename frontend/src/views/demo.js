@@ -20,14 +20,26 @@ export async function demoView(root) {
       <div class="column box mr-3">
         <h2 class="title is-5">Backend failures</h2>
         <div class="field">
+          <label class="checkbox"><input type="checkbox" id="baselineLatency" ${chaos.baselineLatency ? 'checked' : ''} />
+            Realistic baseline latency (random 5-60 ms on every call)</label>
+        </div>
+        <div class="field">
           <label class="checkbox"><input type="checkbox" id="checkoutFailure" ${chaos.checkoutFailure ? 'checked' : ''} />
             Checkout fails (500 from the payment step)</label>
         </div>
         <div class="field">
-          <label class="label">Slow menu (extra latency)</label>
-          <div class="select"><select id="productsLatencyMs">
+          <label class="label">Slow API calls (extra latency)</label>
+          <div class="select"><select id="slowCallLatencyMs">
             ${[0, 500, 1000, 2000, 5000]
-              .map((ms) => `<option value="${ms}" ${chaos.productsLatencyMs === ms ? 'selected' : ''}>${ms ? `+${ms} ms` : 'off'}</option>`)
+              .map((ms) => `<option value="${ms}" ${chaos.slowCallLatencyMs === ms ? 'selected' : ''}>${ms ? `+${ms} ms` : 'off'}</option>`)
+              .join('')}
+          </select></div>
+        </div>
+        <div class="field">
+          <label class="label">...applied to this share of API calls</label>
+          <div class="select"><select id="slowCallRate">
+            ${[0.1, 0.25, 0.5, 1]
+              .map((r) => `<option value="${r}" ${chaos.slowCallRate === r ? 'selected' : ''}>${r * 100}%</option>`)
               .join('')}
           </select></div>
         </div>
@@ -66,13 +78,15 @@ export async function demoView(root) {
 
   const msg = root.querySelector('#chaos-msg');
   const read = () => ({
+    baselineLatency: root.querySelector('#baselineLatency').checked,
     checkoutFailure: root.querySelector('#checkoutFailure').checked,
-    productsLatencyMs: Number(root.querySelector('#productsLatencyMs').value),
+    slowCallLatencyMs: Number(root.querySelector('#slowCallLatencyMs').value),
+    slowCallRate: Number(root.querySelector('#slowCallRate').value),
     outOfStockProductId: root.querySelector('#outOfStockProductId').value,
     errorRate: Number(root.querySelector('#errorRate').value),
   });
 
-  root.querySelectorAll('#checkoutFailure, select').forEach((el) =>
+  root.querySelectorAll('#baselineLatency, #checkoutFailure, select').forEach((el) =>
     el.addEventListener('change', async () => {
       try {
         await api.setChaos(read());

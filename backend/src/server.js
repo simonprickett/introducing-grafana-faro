@@ -54,6 +54,33 @@ const isOutOfStock = (product, quantity = 1) =>
   chaos.get().outOfStockProductId === product.id || product.stock < quantity;
 
 // ---------------------------------------------------------------------------
+// Baseline latency: a small random delay (5-60 ms, skewed towards the low end) on every
+// API call, so request durations vary naturally. Toggled from the demo controls.
+// ---------------------------------------------------------------------------
+app.use('/api', async (req, res, next) => {
+  if (req.path === '/health' || req.path.startsWith('/chaos')) return next();
+  if (chaos.get().baselineLatency) {
+    await sleep(5 + Math.random() ** 2 * 55);
+  }
+  next();
+});
+
+// ---------------------------------------------------------------------------
+// Chaos middleware: slow calls. A configurable fraction of requests are delayed, with
+// jitter, inside a `chaos.slow_call` span so the delay is visible in the trace waterfall.
+// ---------------------------------------------------------------------------
+app.use('/api', async (req, res, next) => {
+  if (req.path === '/health' || req.path.startsWith('/chaos')) return next();
+  const { slowCallLatencyMs, slowCallRate } = chaos.get();
+  if (slowCallLatencyMs > 0 && Math.random() < slowCallRate) {
+    const ms = Math.round(slowCallLatencyMs * (0.75 + Math.random() * 0.5));
+    logger.warn('Injected slow call', { path: req.path, latencyMs: ms });
+    await withSpan('chaos.slow_call', { 'chaos.latency_ms': ms }, () => sleep(ms));
+  }
+  next();
+});
+
+// ---------------------------------------------------------------------------
 // Chaos middleware: random failures for everything except health + chaos control.
 // ---------------------------------------------------------------------------
 app.use('/api', (req, res, next) => {
@@ -72,13 +99,6 @@ app.use('/api', (req, res, next) => {
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
 app.get('/api/products', async (req, res) => {
-  const { productsLatencyMs } = chaos.get();
-  if (productsLatencyMs > 0) {
-    await withSpan('chaos.latency', { 'chaos.latency_ms': productsLatencyMs }, () =>
-      sleep(productsLatencyMs),
-    );
-  }
-
   const q = String(req.query.q ?? '').trim().toLowerCase();
   const category = String(req.query.category ?? '').trim().toLowerCase();
 
