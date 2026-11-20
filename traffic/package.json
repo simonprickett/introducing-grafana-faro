@@ -1,0 +1,17 @@
+{
+  "name": "coffee-cart-traffic",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Synthetic visitors for the coffee cart demo: drives real browsers so Faro instruments them like real users",
+  "type": "module",
+  "scripts": {
+    "setup": "playwright install chromium",
+    "normal": "node generate.mjs normal",
+    "heavy": "node generate.mjs heavy",
+    "errors": "node generate.mjs errors",
+    "showcase": "node generate.mjs showcase"
+  },
+  "dependencies": {
+    "playwright": "^1.60.0"
+  }
+}

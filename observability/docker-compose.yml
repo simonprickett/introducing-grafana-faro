@@ -20,6 +20,9 @@ services:
     volumes:
       # Keep data between restarts. `docker compose down -v` wipes it.
       - lgtm-data:/data
+      # The demo dashboard. Edit the JSON (or export from Grafana over it) and `docker compose restart lgtm`.
+      - ./grafana/dashboards:/coffee-cart-dashboards:ro
+      - ./grafana/dashboards.yaml:/otel-lgtm/grafana/conf/provisioning/dashboards/coffee-cart.yaml:ro
     environment:
       GF_PATHS_DATA: /data/grafana
 
@@ -37,6 +40,8 @@ services:
       - "12345:12345"   # Alloy UI, for debugging
     volumes:
       - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
+      # Source maps for the frontend build, see fetch-sourcemaps.sh
+      - ./sourcemaps:/etc/alloy/sourcemaps:ro
     environment:
       # Origin(s) the browser app is served from, comma separated.
       FARO_ALLOWED_ORIGINS: ${FARO_ALLOWED_ORIGINS:-http://localhost:8080}

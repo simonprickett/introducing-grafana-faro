@@ -9,6 +9,18 @@ faro.receiver "coffee_cart" {
     cors_allowed_origins     = split(coalesce(sys.env("FARO_ALLOWED_ORIGINS"), "http://localhost:8080"), ",")
   }
 
+  // Turns minified stack traces back into source. Alloy can't download the maps itself (from
+  // inside its container "localhost:8080" is not the frontend), so observability/fetch-sourcemaps.sh
+  // copies them into ./sourcemaps. Frames whose URL starts with minified_path_prefix are looked
+  // up there as <file>.map.
+  sourcemaps {
+    download = false
+    location {
+      path                 = "/etc/alloy/sourcemaps"
+      minified_path_prefix = "http://localhost:8080/assets/"
+    }
+  }
+
   output {
     logs   = [loki.process.faro.receiver]
     traces = [otelcol.exporter.otlp.lgtm.input]

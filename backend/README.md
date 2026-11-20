@@ -27,6 +27,7 @@ BACKEND=nodejs docker compose up --build
 | `PORT` | `3000` | Listen port |
 | `SEED_PRODUCTS_FILE` | Docker: `/seed/products.json`; natively: `backend/seed-products.json` | Path of the shared menu file |
 | `CURRENCY` | `GBP` | ISO 4217 code returned with prices (labels only, no conversion) |
+| `PRODUCT_STOCK` | seed file values | When set to a non-negative integer, overrides the stock of every product. Used to stop load tests selling out |
 | `FRONTEND_ORIGIN` | `http://localhost:8080` | Allowed CORS origin(s), comma separated |
 | `OTEL_SERVICE_NAME` | `coffee-cart-backend` | Service name |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` / `_HEADERS` | | Standard OTLP settings |

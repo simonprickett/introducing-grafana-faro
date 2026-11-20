@@ -8,6 +8,8 @@ services:
       PORT: 3000
       SEED_PRODUCTS_FILE: /seed/products.json
       CURRENCY: ${CURRENCY:-GBP}
+      # Empty keeps each product's stock from the seed file (25). Raise it for load tests.
+      PRODUCT_STOCK: ${PRODUCT_STOCK:-}
       # Origin(s) of the frontend, as the *browser* sees it (used for CORS).
       FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:8080}
       # OpenTelemetry - standard OTEL_* variables.

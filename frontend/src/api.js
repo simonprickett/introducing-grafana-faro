@@ -1,5 +1,5 @@
 import { config } from './config.js';
-import { reportError } from './faro.js';
+import { reportError, traceForRequest } from './faro.js';
 import { busyStart, busyEnd } from './busy.js';
 
 export class ApiError extends Error {
@@ -22,15 +22,17 @@ async function request(method, path, body) {
 async function doRequest(method, path, body) {
   const url = `${config.apiUrl}/api${path}`;
   let res;
+  // Keep the options object: Faro's fetch instrumentation reports the request's trace against it.
+  const init = {
+    method,
+    headers: body ? { 'content-type': 'application/json' } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+  };
   try {
-    res = await fetch(url, {
-      method,
-      headers: body ? { 'content-type': 'application/json' } : undefined,
-      body: body ? JSON.stringify(body) : undefined,
-    });
+    res = await fetch(url, init);
   } catch (err) {
     // Network failure / CORS failure / backend down.
-    reportError(err, { method, path });
+    reportError(err, { method, path }, traceForRequest(init));
     throw new ApiError('Could not reach the server', 0);
   }
 
@@ -38,7 +40,7 @@ async function doRequest(method, path, body) {
   if (!res.ok) {
     const error = new ApiError(data.error || `Request failed (${res.status})`, res.status);
     // Tell Faro about failed API calls, with enough context to find the trace.
-    reportError(error, { method, path, status: res.status });
+    reportError(error, { method, path, status: res.status }, traceForRequest(init));
     throw error;
   }
   return data;

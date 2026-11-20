@@ -8,10 +8,21 @@ let faro = null;
 let lastRequest = null;
 const listeners = new Set();
 
+// The trace and span of each API call, keyed by the options object the caller passed to fetch.
+// A failed call uses this to report its exception *with* the trace it belongs to, so the error
+// can be opened as a trace. (Faro only attaches trace context to errors reported while a span is
+// active, which is no longer true by the time we handle a response.)
+const requestTraces = new WeakMap();
+export const traceForRequest = (init) => requestTraces.get(init);
+
 function recordApiRequest(span, request, result) {
   const attrs = span.attributes ?? {};
   const url = String(attrs['url.full'] ?? attrs['http.url'] ?? '');
   if (url && !url.startsWith(config.apiUrl)) return;
+  if (request && typeof request === 'object') {
+    const { traceId, spanId } = span.spanContext();
+    requestTraces.set(request, { traceId, spanId });
+  }
   if (url.includes('/api/chaos')) return; // demo control plane, not part of the shop flow
   lastRequest = {
     traceId: span.spanContext().traceId,
@@ -84,5 +95,10 @@ export const setUser = (user) => faro?.api.setUser(user);
 export const setView = (name) => faro?.api.setView({ name });
 export const trackEvent = (name, attributes) => faro?.api.pushEvent(name, toStrings(attributes));
 export const trackMeasurement = (type, values) => faro?.api.pushMeasurement({ type, values });
-export const reportError = (error, context) =>
-  faro?.api.pushError(error, context ? { context: toStrings(context) } : undefined);
+// spanContext ({ traceId, spanId }) links the exception to a trace. Optional: errors with no
+// request behind them (a broken image, a bug in the UI code) have no trace to link to.
+export const reportError = (error, context, spanContext) =>
+  faro?.api.pushError(error, {
+    ...(context && { context: toStrings(context) }),
+    ...(spanContext && { spanContext }),
+  });

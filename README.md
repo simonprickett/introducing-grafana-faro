@@ -68,6 +68,7 @@ The frontend ([`money()` in `frontend/src/util.js`](frontend/src/util.js)) asks 
 | Clicks that matter | Faro **user actions** (`add-to-cart`, `search`, `clear-search`, `view-product`, `filter-category`, `remove-from-cart`, `increase-quantity`, `decrease-quantity`, `place-order`, `open-cart`, `open-menu`, `back-to-menu`). Each groups the API calls, errors and events it causes, and the browser's fetch spans carry `faro.action.user.name` / `faro.action.user.parentId`, so you can go from a click to its trace. Declared in the HTML with `data-faro-user-action-name` (see `actionAttrs` in `frontend/src/util.js`); `search` and `place-order` start programmatically with `startUserAction` |
 | Search / filter / add to cart / checkout | Faro events (`search`, `search_cleared`, `add_to_cart`, `cart_quantity_changed`, `checkout_started`, `order_placed`…) and a custom `order` measurement |
 | Every API call | Browser span → backend span (same trace id), plus `inventory.check` and `payment.process` child spans on checkout |
+| Failed API calls | A Faro exception that carries the failing request's trace id, so the error opens as a trace (see `traceForRequest` in `frontend/src/faro.js`) |
 | Backend logs | OTel logs carrying the trace id, for log ↔ trace correlation |
 | Orders | Metrics: `coffee_cart.orders.placed`, `coffee_cart.checkout.failures`, `coffee_cart.order.value` |
 | Random user identity | Faro `setUser` — each browser gets a stable fake username |
@@ -130,6 +131,7 @@ The frontend (`:8080`) and API (`:3000`) are different origins on purpose. Two t
 backend/            One folder per backend implementation, all with the same API (see backend/README.md)
   nodejs/           Express API, OpenTelemetry setup (src/instrumentation.js), chaos controls
 frontend/           Vanilla JS + Bulma, built with Vite; server.js is a tiny static server
+traffic/            Synthetic visitors (Playwright) that fill the dashboards: normal, heavy and error phases (see traffic/README.md)
 observability/      Local LGTM stack + Alloy Faro receiver, its own compose project (see observability/README.md)
 docker-compose.yml  The app (frontend and backend)
 .env.example
