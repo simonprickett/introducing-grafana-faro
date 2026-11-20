@@ -1,0 +1,54 @@
+// Faro receiver for the local stack.
+// Browser (Faro Web SDK) -> faro.receiver -> Loki (logs) + Tempo via OTLP (traces).
+
+faro.receiver "coffee_cart" {
+  server {
+    listen_address           = "0.0.0.0"
+    listen_port              = 12347
+    // Without the app's origin here the browser blocks the POST (CORS).
+    cors_allowed_origins     = split(coalesce(sys.env("FARO_ALLOWED_ORIGINS"), "http://localhost:8080"), ",")
+  }
+
+  output {
+    logs   = [loki.process.faro.receiver]
+    traces = [otelcol.exporter.otlp.lgtm.input]
+  }
+}
+
+// faro.receiver sends the app name only inside the log line, so Loki files everything under
+// service_name="unknown_service". Promote a few low-cardinality fields to labels so the frontend
+// is queryable as {service_name="coffee-cart-frontend"}, like the backend is.
+loki.process "faro" {
+  stage.logfmt {
+    mapping = {
+      app_name        = "",
+      app_environment = "",
+      kind            = "",
+    }
+  }
+
+  stage.labels {
+    values = {
+      service_name           = "app_name",
+      deployment_environment = "app_environment",
+      kind                   = "kind",
+    }
+  }
+
+  forward_to = [loki.write.lgtm.receiver]
+}
+
+loki.write "lgtm" {
+  endpoint {
+    url = "http://lgtm:3100/loki/api/v1/push"
+  }
+}
+
+otelcol.exporter.otlp "lgtm" {
+  client {
+    endpoint = "lgtm:4317"
+    tls {
+      insecure = true
+    }
+  }
+}

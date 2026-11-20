@@ -1,0 +1,47 @@
+# Local, open source observability stack. Separate from the app: start it first, leave it running,
+# and restart the app as often as you like.
+#
+#   docker compose -f observability/docker-compose.yml up -d
+#
+# The app containers reach OTLP via host.docker.internal:4318 and the browser reaches Alloy on
+# localhost:12347, so the two compose projects don't need to share a network.
+name: coffee-cart-observability
+
+services:
+  # Grafana + Tempo + Loki + Mimir/Prometheus + an OpenTelemetry Collector in one image.
+  lgtm:
+    image: grafana/otel-lgtm:latest
+    ports:
+      # Grafana. 3001 on the host because the app's API already uses 3000.
+      - "3001:3000"
+      # OTLP from the backend. gRPC and HTTP.
+      - "4317:4317"
+      - "4318:4318"
+    volumes:
+      # Keep data between restarts. `docker compose down -v` wipes it.
+      - lgtm-data:/data
+    environment:
+      GF_PATHS_DATA: /data/grafana
+
+  # Receives Faro telemetry from the browser and forwards it to Loki (logs, events, exceptions,
+  # measurements) and Tempo (traces) inside the LGTM container.
+  alloy:
+    image: grafana/alloy:latest
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    ports:
+      - "12347:12347"   # faro.receiver (browser -> http://localhost:12347/collect)
+      - "12345:12345"   # Alloy UI, for debugging
+    volumes:
+      - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
+    environment:
+      # Origin(s) the browser app is served from, comma separated.
+      FARO_ALLOWED_ORIGINS: ${FARO_ALLOWED_ORIGINS:-http://localhost:8080}
+    depends_on:
+      - lgtm
+
+volumes:
+  lgtm-data:

@@ -17,9 +17,15 @@ Everything is self-contained: Bulma, Faro and the product illustrations are bund
 Requires Docker.
 
 ```sh
-cp .env.example .env     # optional - defaults suit a local LGTM stack
+# 1. The local observability stack (Grafana, Tempo, Loki, Mimir, Alloy). Start once, leave running.
+docker compose -f observability/docker-compose.yml up -d
+
+# 2. The app
+cp .env.example .env     # optional - defaults suit the local stack
 docker compose up --build
 ```
+
+- Grafana: http://localhost:3001 (details in [`observability/README.md`](observability/README.md))
 
 - Frontend: http://localhost:8080
 - API: http://localhost:3000/api/products
@@ -124,7 +130,8 @@ The frontend (`:8080`) and API (`:3000`) are different origins on purpose. Two t
 backend/            One folder per backend implementation, all with the same API (see backend/README.md)
   nodejs/           Express API, OpenTelemetry setup (src/instrumentation.js), chaos controls
 frontend/           Vanilla JS + Bulma, built with Vite; server.js is a tiny static server
-docker-compose.yml
+observability/      Local LGTM stack + Alloy Faro receiver, its own compose project (see observability/README.md)
+docker-compose.yml  The app (frontend and backend)
 .env.example
 ```
 
