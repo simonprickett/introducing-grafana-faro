@@ -13,9 +13,7 @@ const { HttpInstrumentation } = require('@opentelemetry/instrumentation-http');
 const { ExpressInstrumentation } = require('@opentelemetry/instrumentation-express');
 const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http');
 const { OTLPMetricExporter } = require('@opentelemetry/exporter-metrics-otlp-http');
-const { OTLPLogExporter } = require('@opentelemetry/exporter-logs-otlp-http');
 const { PeriodicExportingMetricReader } = require('@opentelemetry/sdk-metrics');
-const { BatchLogRecordProcessor } = require('@opentelemetry/sdk-logs');
 
 process.env.OTEL_SERVICE_NAME ||= 'coffee-cart-backend';
 
@@ -27,7 +25,7 @@ const sdk = new NodeSDK({
       exportIntervalMillis: 10_000,
     }),
   ],
-  logRecordProcessors: [new BatchLogRecordProcessor(new OTLPLogExporter())],
+  // Logs: no explicit setup. NodeSDK creates an OTLP log exporter from the OTEL_* variables.
   instrumentations: [
     new HttpInstrumentation({
       // Don't create spans for health checks or CORS preflights - they are noise.

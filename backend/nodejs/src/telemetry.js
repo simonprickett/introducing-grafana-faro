@@ -3,8 +3,9 @@
 // to OTel Logs. Log records written while a span is active automatically carry
 // that span's trace_id/span_id, which is what enables log <-> trace correlation.
 
-const { trace, metrics, SpanStatusCode, isSpanContextValid } = require('@opentelemetry/api');
-const { logs, SeverityNumber } = require('@opentelemetry/api-logs');
+// The logs API ships inside @opentelemetry/api (1.10+). Importing it from the separate
+// @opentelemetry/api-logs package gives a different global registry, and records are dropped.
+const { trace, metrics, logs, SeverityNumber, SpanStatusCode, isSpanContextValid } = require('@opentelemetry/api');
 
 const tracer = trace.getTracer('coffee-cart');
 const meter = metrics.getMeter('coffee-cart');
