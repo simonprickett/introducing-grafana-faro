@@ -131,6 +131,7 @@ The frontend (`:8080`) and API (`:3000`) are different origins on purpose. Two t
 backend/            One folder per backend implementation, all with the same API (see backend/README.md)
   nodejs/           Express API, OpenTelemetry setup (src/instrumentation.js), chaos controls
 frontend/           Vanilla JS + Bulma, built with Vite; server.js is a tiny static server
+hello/              The smallest Faro demo: one HTML page, no backend (see hello/README.md)
 traffic/            Synthetic visitors (Playwright) that fill the dashboards: normal, heavy and error phases (see traffic/README.md)
 observability/      Local LGTM stack + Alloy Faro receiver, its own compose project (see observability/README.md)
 docker-compose.yml  The app (frontend and backend)

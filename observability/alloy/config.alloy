@@ -1,12 +1,17 @@
 // Faro receiver for the local stack.
 // Browser (Faro Web SDK) -> faro.receiver -> Loki (logs) + Tempo via OTLP (traces).
 
-faro.receiver "coffee_cart" {
+// Lets the Alloy UI stream the data passing through each component (Live debugging tab).
+livedebugging {
+  enabled = true
+}
+
+faro.receiver "default" {
   server {
     listen_address           = "0.0.0.0"
     listen_port              = 12347
     // Without the app's origin here the browser blocks the POST (CORS).
-    cors_allowed_origins     = split(coalesce(sys.env("FARO_ALLOWED_ORIGINS"), "http://localhost:8080"), ",")
+    cors_allowed_origins     = split(coalesce(sys.env("FARO_ALLOWED_ORIGINS"), "http://localhost:8080,http://localhost:8081"), ",")
   }
 
   // Turns minified stack traces back into source. Alloy can't download the maps itself (from

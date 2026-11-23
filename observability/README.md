@@ -46,6 +46,10 @@ The dashboard tells one story: **the backend says all is well, but users are hav
 
 The purple dashed lines on the charts mark where each phase of a [traffic generator](../traffic/README.md) run started (normal, heavy, errors, recovery). Hover one for its name. They are Grafana annotations tagged `coffee-cart-phase`, posted by the generator, and they only appear for runs on this Grafana.
 
+### The hello world dashboard
+
+**Faro hello world** (http://localhost:3001/d/faro-hello) goes with the [`hello/`](../hello/README.md) page, the simplest Faro demo. Its rows are named after the page's buttons: page load, requests, things going wrong, things you choose to send, and a timeline of everything received.
+
 ### The frontend dashboard
 
 **Coffee Cart: Frontend (Faro)** (http://localhost:3001/d/coffee-cart-frontend) is for a talk about Faro. It is all about the browser, and links to and from the story dashboard.
@@ -113,6 +117,12 @@ Tips:
 - Faro puts the session in each line as `session_id=...`, so `{service_name="coffee-cart-frontend"} |= "session_id=<id>"` follows one visitor.
 - If the frontend streams are missing, check the Network tab for POSTs to `localhost:12347/collect`. A `202` means Alloy accepted them. Also look at http://localhost:12345.
 
+## Watching data go through Alloy
+
+The config turns on Alloy's **live debugging**. Open http://localhost:12345, click the `loki.process.faro` component, then its **Live debugging** tab. Every Faro log line shows up as it arrives (`[IN]`), and again after the labelling stage (`[OUT]`), where `service_name`, `deployment_environment` and `kind` have been added. Use the filter box to follow one app, for example `faro-hello`.
+
+It only works for logs. The Faro receiver and the OTLP exporter don't support live debugging, so Alloy can't show spans. The closest it gets is the `faro.tracing.fetch` log lines, which carry a `traceID`. To see the traces themselves, use Tempo in Grafana.
+
 ## Ports and networking
 
 Both compose projects publish ports on the host and don't share a network. The app's backend reaches OTLP through `host.docker.internal:4318`, and the browser reaches Alloy on `localhost:12347`. So the stack and the app can be started, stopped and rebuilt independently.
@@ -121,7 +131,7 @@ Both compose projects publish ports on the host and don't share a network. The a
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `FARO_ALLOWED_ORIGINS` | `http://localhost:8080` | Origin(s) allowed by Alloy's CORS check, comma separated. Set it if you serve the frontend from elsewhere. |
+| `FARO_ALLOWED_ORIGINS` | `http://localhost:8080,http://localhost:8081` (coffee cart and hello world) | Origin(s) allowed by Alloy's CORS check, comma separated. Set it if you serve the frontend from elsewhere. |
 
 If the browser console shows a CORS error posting to `/collect`, this is the first thing to check.
 

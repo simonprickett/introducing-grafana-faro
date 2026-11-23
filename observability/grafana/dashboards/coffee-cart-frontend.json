@@ -631,7 +631,14 @@
                   "fields": "",
                   "values": true
                 },
-                "showUnfilled": true
+                "showUnfilled": true,
+                "textMode": "value_and_name",
+                "sizing": "manual",
+                "maxVizHeight": 36,
+                "text": {
+                  "titleSize": 14,
+                  "valueSize": 20
+                }
               },
               "fieldConfig": {
                 "defaults": {
@@ -785,7 +792,14 @@
                   "fields": "",
                   "values": true
                 },
-                "showUnfilled": true
+                "showUnfilled": true,
+                "textMode": "value_and_name",
+                "sizing": "manual",
+                "maxVizHeight": 36,
+                "text": {
+                  "titleSize": 14,
+                  "valueSize": 20
+                }
               },
               "fieldConfig": {
                 "defaults": {
@@ -1013,7 +1027,14 @@
                   "fields": "",
                   "values": true
                 },
-                "showUnfilled": true
+                "showUnfilled": true,
+                "textMode": "value_and_name",
+                "sizing": "manual",
+                "maxVizHeight": 36,
+                "text": {
+                  "titleSize": 14,
+                  "valueSize": 20
+                }
               },
               "fieldConfig": {
                 "defaults": {
@@ -1091,7 +1112,14 @@
                   "fields": "",
                   "values": true
                 },
-                "showUnfilled": true
+                "showUnfilled": true,
+                "textMode": "value_and_name",
+                "sizing": "manual",
+                "maxVizHeight": 36,
+                "text": {
+                  "titleSize": 14,
+                  "valueSize": 20
+                }
               },
               "fieldConfig": {
                 "defaults": {
@@ -1169,7 +1197,14 @@
                   "fields": "",
                   "values": true
                 },
-                "showUnfilled": true
+                "showUnfilled": true,
+                "textMode": "value_and_name",
+                "sizing": "manual",
+                "maxVizHeight": 36,
+                "text": {
+                  "titleSize": 14,
+                  "valueSize": 20
+                }
               },
               "fieldConfig": {
                 "defaults": {
@@ -1323,7 +1358,13 @@
                   "values": true
                 },
                 "showUnfilled": true,
-                "textMode": "value_and_name"
+                "textMode": "value_and_name",
+                "sizing": "manual",
+                "maxVizHeight": 36,
+                "text": {
+                  "titleSize": 14,
+                  "valueSize": 20
+                }
               },
               "fieldConfig": {
                 "defaults": {
@@ -1873,7 +1914,7 @@
                         "x": 0,
                         "y": 0,
                         "width": 8,
-                        "height": 8,
+                        "height": 14,
                         "element": {
                           "kind": "ElementReference",
                           "name": "u-funnel"
@@ -1886,7 +1927,7 @@
                         "x": 8,
                         "y": 0,
                         "width": 8,
-                        "height": 8,
+                        "height": 14,
                         "element": {
                           "kind": "ElementReference",
                           "name": "u-views"
@@ -1899,7 +1940,7 @@
                         "x": 16,
                         "y": 0,
                         "width": 8,
-                        "height": 8,
+                        "height": 14,
                         "element": {
                           "kind": "ElementReference",
                           "name": "u-actions"
@@ -1910,7 +1951,7 @@
                       "kind": "GridLayoutItem",
                       "spec": {
                         "x": 0,
-                        "y": 8,
+                        "y": 14,
                         "width": 24,
                         "height": 8,
                         "element": {

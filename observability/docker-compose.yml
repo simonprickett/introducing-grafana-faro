@@ -44,7 +44,7 @@ services:
       - ./sourcemaps:/etc/alloy/sourcemaps:ro
     environment:
       # Origin(s) the browser app is served from, comma separated.
-      FARO_ALLOWED_ORIGINS: ${FARO_ALLOWED_ORIGINS:-http://localhost:8080}
+      FARO_ALLOWED_ORIGINS: ${FARO_ALLOWED_ORIGINS:-http://localhost:8080,http://localhost:8081}
     depends_on:
       - lgtm
 

@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Faro hello world</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font: 16px/1.5 system-ui, sans-serif; max-width: 40rem; margin: 2rem auto; padding: 0 1rem; }
+    button { font: inherit; padding: .4rem .8rem; margin: .25rem .25rem .25rem 0; cursor: pointer; }
+    #log { font: 14px/1.4 ui-monospace, monospace; white-space: pre-wrap; border: 1px solid #8884; padding: .5rem; min-height: 6rem; }
+    small { opacity: .7; }
+  </style>
+</head>
+<body>
+  <h1>Faro hello world</h1>
+  <p>Every button below sends something to Grafana through Faro. <small>Session: <code id="session">-</code></small></p>
+
+  <h2>Requests</h2>
+  <button id="load">Load products</button>
+  <button id="missing">Load a file that isn't there</button>
+
+  <h2>Things going wrong</h2>
+  <button id="throw">Throw an error</button>
+  <button id="dead">Click me (I do nothing)</button>
+
+  <h2>Things you choose to send</h2>
+  <button id="logit">Send a log</button>
+  <button id="event">Send an event</button>
+
+  <h2>What happened here</h2>
+  <div id="log"></div>
+
+  <!-- Faro, vendored so this works offline. The tracing bundle adds spans for fetch calls. -->
+  <script src="vendor/faro-web-sdk.iife.js"></script>
+  <script src="vendor/faro-web-tracing.iife.js"></script>
+  <script>
+    // ---- Faro: this is the whole setup ----------------------------------------------------
+    const faro = GrafanaFaroWebSdk.initializeFaro({
+      url: 'http://localhost:12347/collect',          // Alloy's Faro receiver (or a Grafana Cloud URL)
+      app: { name: 'faro-hello', version: '1.0.0', environment: 'demo' },
+      instrumentations: [
+        ...GrafanaFaroWebSdk.getWebInstrumentations({ captureConsole: true }), // errors, vitals, sessions, clicks...
+        new GrafanaFaroWebTracing.TracingInstrumentation(),                    // spans for fetch
+      ],
+    });
+    // ---------------------------------------------------------------------------------------
+
+    const $ = (id) => document.getElementById(id);
+    const say = (text) => { $('log').textContent += new Date().toLocaleTimeString() + '  ' + text + '\n'; };
+    $('session').textContent = faro.metas.value.session?.id ?? '-';
+
+    async function loadFile(name) {
+      const res = await fetch(name);
+      if (!res.ok) throw new Error(name + ' returned ' + res.status);
+      return res.json();
+    }
+
+    $('load').onclick = async () => {
+      const products = await loadFile('data.json');
+      say('Loaded ' + products.length + ' products');
+    };
+
+    $('missing').onclick = async () => {
+      try {
+        await loadFile('nothing-here.json');
+      } catch (err) {
+        faro.api.pushError(err);      // report a handled error
+        say('Request failed: ' + err.message);
+      }
+    };
+
+    $('throw').onclick = function brewCoffee() {
+      say('Throwing an error (Faro catches it)');
+      throw new Error('The coffee machine is on fire');   // nobody catches this one
+    };
+
+    $('logit').onclick = () => {
+      faro.api.pushLog(['Customer asked for oat milk'], { level: 'info' });
+      say('Sent a log line');
+    };
+
+    $('event').onclick = () => {
+      faro.api.pushEvent('coffee_ordered', { drink: 'flat white', size: 'large' });
+      say('Sent a "coffee_ordered" event');
+    };
+
+    // The "do nothing" button has no handler on purpose: Faro notices clicks that do nothing.
+    $('dead').addEventListener('click', () => {});
+  </script>
+</body>
+</html>
