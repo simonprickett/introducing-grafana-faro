@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1260 520" width="1260" height="520" font-family="Helvetica, Arial, sans-serif">
+  <title>Architecture of the local coffee cart demo</title>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"/>
+    </marker>
+  </defs>
+  <rect width="1260" height="520" fill="#ffffff"/>
+
+  <!-- LGTM group -->
+  <rect x="660" y="30" width="270" height="450" rx="16" fill="#f4f6f8" stroke="#a0aec0" stroke-width="2" stroke-dasharray="8 6"/>
+  <text x="795" y="62" text-anchor="middle" font-size="18" fill="#4a5568" font-weight="600">Open source LGTM stack</text>
+
+  <!-- Frontend -->
+  <rect x="40" y="220" width="230" height="90" rx="12" fill="#fff1e0" stroke="#f05a28" stroke-width="3"/>
+  <text x="155" y="256" text-anchor="middle" font-size="24" font-weight="700" fill="#1a202c">Frontend</text>
+  <text x="155" y="284" text-anchor="middle" font-size="16" fill="#4a5568">JS app + Faro Web SDK</text>
+
+  <!-- Alloy -->
+  <rect x="370" y="220" width="230" height="90" rx="12" fill="#fff1e0" stroke="#f05a28" stroke-width="3"/>
+  <text x="485" y="256" text-anchor="middle" font-size="24" font-weight="700" fill="#1a202c">Alloy</text>
+  <text x="485" y="284" text-anchor="middle" font-size="16" fill="#4a5568">faro.receiver</text>
+
+  <!-- Backend -->
+  <rect x="370" y="390" width="230" height="90" rx="12" fill="#e6f0ff" stroke="#3b82f6" stroke-width="3"/>
+  <text x="485" y="426" text-anchor="middle" font-size="24" font-weight="700" fill="#1a202c">Backend</text>
+  <text x="485" y="454" text-anchor="middle" font-size="16" fill="#4a5568">Node API + OpenTelemetry</text>
+
+  <!-- Loki / Tempo / Mimir -->
+  <rect x="685" y="90" width="220" height="90" rx="12" fill="#ffffff" stroke="#4a5568" stroke-width="2.5"/>
+  <text x="795" y="126" text-anchor="middle" font-size="24" font-weight="700" fill="#1a202c">Loki</text>
+  <text x="795" y="154" text-anchor="middle" font-size="16" fill="#4a5568">logs, events, exceptions</text>
+
+  <rect x="685" y="215" width="220" height="90" rx="12" fill="#ffffff" stroke="#4a5568" stroke-width="2.5"/>
+  <text x="795" y="251" text-anchor="middle" font-size="24" font-weight="700" fill="#1a202c">Tempo</text>
+  <text x="795" y="279" text-anchor="middle" font-size="16" fill="#4a5568">traces</text>
+
+  <rect x="685" y="340" width="220" height="90" rx="12" fill="#ffffff" stroke="#4a5568" stroke-width="2.5"/>
+  <text x="795" y="376" text-anchor="middle" font-size="24" font-weight="700" fill="#1a202c">Mimir</text>
+  <text x="795" y="404" text-anchor="middle" font-size="16" fill="#4a5568">metrics</text>
+
+  <!-- Grafana -->
+  <rect x="1010" y="215" width="210" height="90" rx="12" fill="#fff1e0" stroke="#f05a28" stroke-width="3"/>
+  <text x="1115" y="251" text-anchor="middle" font-size="24" font-weight="700" fill="#1a202c">Grafana</text>
+  <text x="1115" y="279" text-anchor="middle" font-size="16" fill="#4a5568">dashboards</text>
+
+  <!-- Arrows -->
+  <g stroke="#4a5568" stroke-width="3" fill="none" marker-end="url(#arrow)">
+    <!-- Frontend -> Alloy -->
+    <line x1="270" y1="265" x2="368" y2="265"/>
+    <!-- Alloy -> stack -->
+    <line x1="600" y1="265" x2="658" y2="265"/>
+    <!-- Frontend -> Backend (elbow) -->
+    <path d="M155,310 V435 H368"/>
+    <!-- Backend -> stack -->
+    <line x1="600" y1="435" x2="658" y2="435"/>
+    <!-- Grafana queries stack -->
+    <line x1="1010" y1="265" x2="932" y2="265"/>
+  </g>
+
+  <!-- Labels -->
+  <g font-size="15" fill="#2d3748" text-anchor="middle">
+    <text x="319" y="250">Faro data</text>
+    <text x="630" y="250">logs</text>
+    <text x="630" y="287">traces</text>
+    <text x="262" y="425">API calls with traceparent</text>
+    <text x="630" y="418">OTLP</text>
+    <text x="971" y="250">queries</text>
+  </g>
+</svg>
