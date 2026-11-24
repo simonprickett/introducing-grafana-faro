@@ -1,5 +1,7 @@
 # Introducing Grafana Faro — Coffee Cart demo
 
+![Screenshot of the demo coffee cart app.](coffee_cart_faro_screenshot.png)
+
 A deliberately small demo app for showing [Grafana Faro](https://grafana.com/oss/faro/) (frontend observability) alongside backend OpenTelemetry, so you can follow a single user action from the browser through to the API as one distributed trace.
 
 It is a coffee cart: browse a menu, add things to a cart, check out. There is no real payment and no database. Data is in memory and resets when the backend restarts.
