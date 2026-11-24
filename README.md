@@ -148,3 +148,11 @@ cd frontend && npm install && npm run dev
 ```
 
 When using the Vite dev server, set the backend's `FRONTEND_ORIGIN=http://localhost:5173`.
+
+## Additional resources
+
+- [Faro Web SDK on GitHub](https://github.com/grafana/faro-web-sdk).
+- [Grafana Play](https://play.grafana.org).
+- [QuickPizza on GitHub](https://github.com/grafana/quickpizza): a demo application for these concepts.
+- [Frontend Observability documentation](https://grafana.com/docs/grafana-cloud/monitor-applications/frontend-observability/).
+- [grafana/otel-lgtm Docker image](https://github.com/grafana/docker-otel-lgtm).
