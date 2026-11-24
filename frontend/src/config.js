@@ -6,4 +6,7 @@ export const config = {
   appName: c.appName ?? 'coffee-cart-frontend',
   appVersion: c.appVersion ?? '1.0.0',
   appEnv: c.appEnv ?? 'local',
+  bundleId: c.bundleId || undefined,
+  // Record session replays (loads the replay code only when true).
+  replay: c.replay === true,
 };

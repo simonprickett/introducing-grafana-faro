@@ -17,13 +17,12 @@ Everything is self-contained: Bulma, Faro and the product illustrations are bund
 Requires Docker.
 
 ```sh
-# 1. The local observability stack (Grafana, Tempo, Loki, Mimir, Alloy). Start once, leave running.
-docker compose -f observability/docker-compose.yml up -d
-
-# 2. The app
-cp .env.example .env     # optional - defaults suit the local stack
-docker compose up --build
+./start.sh local     # the app, plus the local stack (Grafana, Tempo, Loki, Mimir, Alloy)
+./start.sh cloud     # the app only, sending its telemetry to Grafana Cloud
+./start.sh stop      # stop the app
 ```
+
+`./start.sh local` works with no setup. It creates `.env.local` from [`.env.local.example`](.env.local.example) the first time. For Grafana Cloud, copy [`.env.cloud.example`](.env.cloud.example) to `.env.cloud` and fill in the values marked REQUIRED (see [Switching between local and Grafana Cloud](#switching-between-local-and-grafana-cloud)).
 
 - Grafana: http://localhost:3001 (details in [`observability/README.md`](observability/README.md))
 
@@ -36,12 +35,13 @@ Faro and OTLP telemetry is sent to wherever you point it (see below). If nothing
 
 ## Configuration
 
-All configuration is by environment variable (see [`.env.example`](.env.example)). The frontend container generates `/config.js` from these at start-up, so **the same image works against a local stack or Grafana Cloud without a rebuild.**
+All configuration is by environment variable (see [`.env.local.example`](.env.local.example) and [`.env.cloud.example`](.env.cloud.example)). The frontend container generates `/config.js` from these at start-up, so **the same image works against a local stack or Grafana Cloud without a rebuild.**
 
 | Variable | Used by | Purpose |
 |---|---|---|
 | `FARO_URL` | frontend | Faro collector URL, reachable from the **browser** |
 | `FARO_APP_NAME` / `_VERSION` / `_ENV` | frontend | Faro `app` metadata |
+| `FARO_REPLAY` | frontend | `true` records session replays, to watch back in Grafana Cloud. On in `.env.cloud`, off in `.env.local`. The recorder is only downloaded when it is on. |
 | `API_URL` | frontend | Where the browser reaches the API |
 | `FRONTEND_ORIGIN` | backend | Origin(s) allowed by CORS |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | backend | OTLP/HTTP endpoint (default `http://host.docker.internal:4318`) |
@@ -53,6 +53,23 @@ Typical targets:
 
 - **Local LGTM stack:** `FARO_URL=http://localhost:12347/collect` (an Alloy `faro.receiver`) and OTLP on `:4318`.
 - **Grafana Cloud:** use the collector URL from *Frontend Observability → Web SDK configuration*, and the OTLP gateway endpoint plus token from your stack's connection details.
+
+## Switching between local and Grafana Cloud
+
+There are two settings files, and `./start.sh` picks one:
+
+| File | Telemetry goes to | Needs |
+|---|---|---|
+| `.env.local` | Alloy and the LGTM stack on your machine | Nothing. Created from `.env.local.example` on first use. |
+| `.env.cloud` | Grafana Cloud | The Faro collector URL, and the OTLP endpoint and `Authorization` header (an access token) from your stack. Copy `.env.cloud.example` and fill them in. |
+
+Both are git ignored, because `.env.cloud` holds an access token. Only the `*.example` files are committed. `./start.sh cloud` refuses to start while a required value is still a placeholder, and never prints the values.
+
+In both modes the app itself runs locally on `localhost:8080` and `:3000`. Only the destination for the telemetry changes, and the containers are recreated with the new settings (no image rebuild is needed). Cloud mode doesn't use the local stack, so the dashboards in `observability/` only show data in local mode.
+
+In Grafana Cloud, add `http://localhost:8080` to the Frontend Observability app's allowed origins, or the browser's requests are blocked by CORS.
+
+In cloud mode, `./start.sh cloud` also uploads the frontend's source maps to Grafana Cloud, so errors there show original file names and lines. That needs `FARO_SOURCEMAP_TOKEN` in `.env.cloud`: an access policy token with the `sourcemaps:read`, `sourcemaps:write`, `sourcemaps:delete` and `stacks:read` scopes. Without it the upload is skipped with a message and everything else still works. To upload by hand, run `observability/upload-sourcemaps-cloud.sh`.
 
 ## Currency
 
@@ -135,7 +152,9 @@ hello/              The smallest Faro demo: one HTML page, no backend (see hello
 traffic/            Synthetic visitors (Playwright) that fill the dashboards: normal, heavy and error phases (see traffic/README.md)
 observability/      Local LGTM stack + Alloy Faro receiver, its own compose project (see observability/README.md)
 docker-compose.yml  The app (frontend and backend)
-.env.example
+start.sh            Starts the app in local or cloud mode (see above)
+.env.local.example  Settings for local mode (copied to .env.local, git ignored)
+.env.cloud.example  Settings for Grafana Cloud mode (copied to .env.cloud, git ignored)
 ```
 
 ## Running without Docker

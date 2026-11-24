@@ -49,6 +49,10 @@ export function startFaro() {
     return;
   }
 
+  // Faro reads the build's bundle ID from this global and sends it with every event. Grafana
+  // Cloud uses it to find the source maps uploaded for the same build.
+  if (config.bundleId) window[`__faroBundleId_${config.appName}`] = config.bundleId;
+
   faro = initializeFaro({
     url: config.faroUrl,
     app: {
@@ -75,6 +79,32 @@ export function startFaro() {
       }),
     ],
   });
+
+  if (config.replay) startReplay();
+}
+
+// Session replay records the page so a visitor's session can be watched back in Grafana Cloud.
+// The recorder is large, so it is only downloaded when FARO_REPLAY=true.
+async function startReplay() {
+  try {
+    const { ReplayInstrumentation } = await import('@grafana/faro-instrumentation-replay');
+    faro.instrumentations.add(
+      new ReplayInstrumentation({
+        // The recorder masks all text and inputs by default. This demo has no real personal data,
+        // so only elements marked with the class "grafana-mask" are masked. A real app should keep
+        // the defaults, or mask whatever is sensitive.
+        maskTextSelector: '.grafana-mask',
+        maskAllInputs: false,
+        // Put the page's CSS into the recording. Otherwise it only holds a link to
+        // http://localhost:8080/assets/..., which the Grafana Cloud player doesn't load, and the
+        // replay plays back unstyled.
+        inlineStylesheet: true,
+      }),
+    );
+    console.info('[faro] session replay is on');
+  } catch (err) {
+    console.warn('[faro] could not start session replay', err);
+  }
 }
 
 // Thin wrappers so the rest of the app works whether or not Faro is enabled.

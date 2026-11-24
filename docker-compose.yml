@@ -36,5 +36,7 @@ services:
       FARO_APP_NAME: ${FARO_APP_NAME:-coffee-cart-frontend}
       FARO_APP_VERSION: ${FARO_APP_VERSION:-1.0.0}
       FARO_APP_ENV: ${FARO_APP_ENV:-local}
+      # "true" records session replays. Meant for Grafana Cloud mode (see .env.cloud.example).
+      FARO_REPLAY: ${FARO_REPLAY:-false}
     depends_on:
       - backend

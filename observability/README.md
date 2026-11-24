@@ -90,7 +90,7 @@ Stack traces in exceptions are minified unless Alloy has the build's source maps
 observability/fetch-sourcemaps.sh
 ```
 
-Run it after every frontend rebuild, since the file names contain a content hash. No Alloy restart is needed. The maps are written to `observability/sourcemaps/` (git ignored). With them, a stack frame reads `failures.js:81` instead of `index-D0JEEeBm.js:20:180088`.
+`./start.sh local` runs it for you after starting the app. Run it by hand after any other frontend rebuild, since the file names contain a content hash. No Alloy restart is needed. The maps are written to `observability/sourcemaps/` (git ignored). With them, a stack frame reads `failures.js:81` instead of `index-D0JEEeBm.js:20:180088`.
 
 ## Stack traces
 
