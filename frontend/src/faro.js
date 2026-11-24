@@ -99,6 +99,10 @@ async function startReplay() {
         // http://localhost:8080/assets/..., which the Grafana Cloud player doesn't load, and the
         // replay plays back unstyled.
         inlineStylesheet: true,
+        // Put images and fonts into the recording too, for the same reason. Without them the
+        // replay only works while http://localhost:8080 is up. Recordings get bigger.
+        inlineImages: true,
+        collectFonts: true,
       }),
     );
     console.info('[faro] session replay is on');
