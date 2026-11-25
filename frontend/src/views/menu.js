@@ -1,7 +1,7 @@
 import { api } from '../api.js';
 import { trackEvent, startUserAction } from '../faro.js';
 import * as failures from '../failures.js';
-import { esc, money, notification, flashMessage, showError, debounce, setCartCount, actionAttrs, addClearButton } from '../util.js';
+import { esc, money, notification, flashMessage, showError, debounce, setCartCount, actionAttrs, addClearButton, preloadImages } from '../util.js';
 
 const CATEGORIES = [
   ['', 'All'],
@@ -39,12 +39,14 @@ export async function menuView(root) {
         results.innerHTML = '<p class="has-text-grey">Nothing matches your search.</p>';
         return;
       }
+      const imageSrcs = products.map((p) => failures.imageSrc(p, 'menu'));
+      await preloadImages(imageSrcs);
       results.innerHTML = `<div class="columns is-multiline">${products
         .map(
-          (p) => `
+          (p, i) => `
         <div class="column is-3">
           <div class="card product-card">
-            <div class="card-image"><a href="#/product/${esc(p.id)}" ${actionAttrs('view-product')}><img src="${esc(failures.imageSrc(p, 'menu'))}" alt="${esc(p.name)}" /></a></div>
+            <div class="card-image"><a href="#/product/${esc(p.id)}" ${actionAttrs('view-product')}><img src="${esc(imageSrcs[i])}" alt="${esc(p.name)}" /></a></div>
             <div class="card-content">
               <p class="title is-5"><a href="#/product/${esc(p.id)}" ${actionAttrs('view-product')}>${esc(p.name)}</a></p>
               <div class="price-row">

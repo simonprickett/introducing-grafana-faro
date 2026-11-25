@@ -79,3 +79,19 @@ export function addClearButton(input, onClear) {
     onClear?.();
   });
 }
+
+// Wait for images to load (or fail) before they are added to the page. The session replay recorder
+// can only put an image into the recording if it has loaded by the time its <img> is added, so views
+// that redraw with innerHTML call this first. Without it, images are sometimes missing from replays.
+export const preloadImages = (urls) =>
+  Promise.all(
+    urls.map(
+      (src) =>
+        new Promise((resolve) => {
+          const img = new Image();
+          img.onload = img.onerror = resolve;
+          img.src = src;
+          setTimeout(resolve, 2000); // never hold the page up for a slow image
+        }),
+    ),
+  );

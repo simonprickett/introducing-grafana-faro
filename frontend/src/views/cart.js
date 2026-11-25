@@ -2,7 +2,7 @@ import { api, resetCartId } from '../api.js';
 import { trackEvent, trackMeasurement, startUserAction } from '../faro.js';
 import * as failures from '../failures.js';
 import { randomName } from '../names.js';
-import { esc, money, notification, showError, setCartCount, actionAttrs, addClearButton } from '../util.js';
+import { esc, money, notification, showError, setCartCount, actionAttrs, addClearButton, preloadImages } from '../util.js';
 
 const itemCount = (cart) => cart.items.reduce((n, i) => n + i.quantity, 0);
 
@@ -19,13 +19,19 @@ export async function cartView(root) {
       showError(root, `Could not load your cart: ${err.message}`, () => cartView(root));
       return;
     }
-    draw(message);
+    await draw(message);
   }
 
   // Draw a cart we already have (the quantity/remove calls return the updated cart, so no
   // extra GET is needed).
-  function draw(message = '') {
+  let latestDraw = 0;
+  async function draw(message = '') {
+    const thisDraw = ++latestDraw;
     setCartCount(itemCount(cart));
+
+    // Load the images first so the session replay can record them (see preloadImages).
+    await preloadImages(cart.items.map((i) => i.product.image));
+    if (thisDraw !== latestDraw) return; // a newer draw has taken over
 
     // The whole view is redrawn on every change, so keep what the user has typed.
     const typedName = root.querySelector('#name')?.value ?? '';
