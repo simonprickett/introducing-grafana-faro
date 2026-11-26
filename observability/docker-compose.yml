@@ -9,8 +9,10 @@ name: coffee-cart-observability
 
 services:
   # Grafana + Tempo + Loki + Mimir/Prometheus + an OpenTelemetry Collector in one image.
+  # The image versions are pinned (not "latest") so the demo can't change under you. To move to a newer
+  # version, change the tag, run `docker compose pull` with internet, and re-check the dashboards.
   lgtm:
-    image: grafana/otel-lgtm:latest
+    image: grafana/otel-lgtm:0.41.1
     ports:
       # Grafana. 3001 on the host because the app's API already uses 3000.
       - "3001:3000"
@@ -29,7 +31,7 @@ services:
   # Receives Faro telemetry from the browser and forwards it to Loki (logs, events, exceptions,
   # measurements) and Tempo (traces) inside the LGTM container.
   alloy:
-    image: grafana/alloy:latest
+    image: grafana/alloy:v1.22.0
     command:
       - run
       - --server.http.listen-addr=0.0.0.0:12345

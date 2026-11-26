@@ -12,7 +12,7 @@ Browser (Faro Web SDK + tracing)  ──fetch + traceparent──▶  Backend (N
         └── Faro collector URL (FARO_URL)                          └── OTLP (OTEL_EXPORTER_OTLP_ENDPOINT)
 ```
 
-Everything is self-contained: Bulma, Faro and the product illustrations are bundled or served locally, so the app itself works offline.
+Everything is self-contained: Bulma, Faro and the product illustrations are bundled or served locally, so the app itself works offline. The first run needs internet (to pull the images and build the app); after that, the local setups run with no network at all.
 
 ## Quick start
 
@@ -26,14 +26,33 @@ Requires Docker.
 
 `./start.sh local` works with no setup. It creates `.env.local` from [`.env.local.example`](.env.local.example) the first time. For Grafana Cloud, copy [`.env.cloud.example`](.env.cloud.example) to `.env.cloud` and fill in the values marked REQUIRED (see [Switching between local and Grafana Cloud](#switching-between-local-and-grafana-cloud)).
 
-- Grafana: http://localhost:3001 (details in [`observability/README.md`](observability/README.md))
-
 - Frontend: http://localhost:8080
 - API: http://localhost:3000/api/products
+- Grafana (local mode): http://localhost:3001 (details in [`observability/README.md`](observability/README.md))
+- Alloy UI (local mode): http://localhost:12345
 
 The backend implementation is chosen with `BACKEND` (default `nodejs`, the only one so far). The API and telemetry contract that every implementation follows is in [`backend/README.md`](backend/README.md).
 
 Faro and OTLP telemetry is sent to wherever you point it (see below). If nothing is listening, the app still works; the telemetry is just dropped. Set `FARO_URL=` (empty) to disable Faro completely.
+
+## Running the demo
+
+The demo has three parts, each with one script that starts what it needs, waits until it is ready, prints the URLs, and **stops everything it started when you press Ctrl-C**. Run each in its own terminal, from the repo root. Docker Desktop must be running.
+
+| Part | Start | What runs |
+|---|---|---|
+| 1. Hello world | `demo/hello.sh` | Grafana and Alloy, plus the [hello page](hello/README.md) on :8081 (no backend) |
+| 2. Coffee cart, local | `demo/local.sh` | Grafana and Alloy, plus the app |
+| 3. Coffee cart, Grafana Cloud | `demo/cloud.sh` | The app only, sending to Cloud (needs `.env.cloud`) |
+| Traffic and errors for part 2 | `demo/traffic.sh` | Synthetic visitors against the running local app ([`traffic/`](traffic/README.md)) |
+
+Parts 1 and 2 share Grafana and Alloy, so to run both at once start `demo/hello.sh` first, then `demo/local.sh --keep-stack`. Parts 2 and 3 both use port 8080, so run one at a time. `demo/traffic.sh` refuses to send to Grafana Cloud unless you pass `--cloud`.
+
+[`DEMO.md`](DEMO.md) is the full run sheet, with what to say and show. [`demo/checklist.html`](demo/checklist.html) is a one-page list of links for the three parts (open it in a browser).
+
+The local stack looks like this. Faro goes through Alloy to Loki (logs, events, exceptions) and Tempo (traces); the backend sends OpenTelemetry straight to the stack.
+
+![Architecture of the local setup: the browser sends Faro data to Alloy, which writes to Loki and Tempo; the backend sends OTLP to the stack; Grafana reads from all of them.](docs/architecture-local.svg)
 
 ## Configuration
 
@@ -44,7 +63,10 @@ All configuration is by environment variable (see [`.env.local.example`](.env.lo
 | `FARO_URL` | frontend | Faro collector URL, reachable from the **browser** |
 | `FARO_APP_NAME` / `_VERSION` / `_ENV` | frontend | Faro `app` metadata |
 | `FARO_REPLAY` | frontend | `true` records session replays, to watch back in Grafana Cloud. On in `.env.cloud`, off in `.env.local`. The recorder is only downloaded when it is on. |
+| `FARO_SOURCEMAP_TOKEN` | `start.sh` | Cloud mode only. An access policy token used to upload source maps (see below). Never sent to the browser. |
 | `API_URL` | frontend | Where the browser reaches the API |
+| `BACKEND` | compose | Which backend implementation to run: a folder name under `backend/` (default `nodejs`) |
+| `PRODUCT_STOCK` | backend | Stock per product, overriding the seed file. `.env.local.example` sets `1000` so a demo or a traffic run doesn't sell out. Empty keeps the seed values (25 each) |
 | `FRONTEND_ORIGIN` | backend | Origin(s) allowed by CORS |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | backend | OTLP/HTTP endpoint (default `http://host.docker.internal:4318`) |
 | `OTEL_EXPORTER_OTLP_HEADERS` | backend | Auth headers, e.g. for Grafana Cloud |
@@ -72,6 +94,14 @@ In both modes the app itself runs locally on `localhost:8080` and `:3000`. Only 
 In Grafana Cloud, add `http://localhost:8080` to the Frontend Observability app's allowed origins, or the browser's requests are blocked by CORS.
 
 In cloud mode, `./start.sh cloud` also uploads the frontend's source maps to Grafana Cloud, so errors there show original file names and lines. That needs `FARO_SOURCEMAP_TOKEN` in `.env.cloud`: an access policy token with the `sourcemaps:read`, `sourcemaps:write`, `sourcemaps:delete` and `stacks:read` scopes. Without it the upload is skipped with a message and everything else still works. To upload by hand, run `observability/upload-sourcemaps-cloud.sh`.
+
+## Session replay
+
+Session replay records what each visitor saw (clicks, the page, the cart) so you can watch it back next to the session's errors and traces. It is implemented with [`@grafana/faro-instrumentation-replay`](https://www.npmjs.com/package/@grafana/faro-instrumentation-replay) in [`frontend/src/faro.js`](frontend/src/faro.js), loaded only when `FARO_REPLAY=true` (on in `.env.cloud`, off in `.env.local`). You watch replays in Grafana Cloud's Frontend Observability; this demo doesn't use them with the local stack. More notes in [`SESSION_REPLAY_NOTES.md`](SESSION_REPLAY_NOTES.md).
+
+- **Replays are self-contained.** The recorder is set to put the page's stylesheet, images and fonts into the recording (`inlineStylesheet`, `inlineImages`, `collectFonts`), so a replay plays back correctly even when the app isn't running or reachable (the player can't load `localhost:8080`). Recordings are bigger as a result. An image is only recorded if it has loaded when its element is added to the page, so the views that redraw with `innerHTML` (the menu and the cart) call `preloadImages` ([`frontend/src/util.js`](frontend/src/util.js)) first.
+- **Masking is relaxed for this demo, and shouldn't be in a real app.** By default the recorder masks all text and all input values. This demo has only made-up data, so it masks just elements with the class `grafana-mask` (`maskTextSelector: '.grafana-mask'`, `maskAllInputs: false`) to make replays readable. **In a real application keep the defaults, or mask whatever is personal or sensitive**, because a replay shows exactly what the user saw and typed.
+- Replays pause after a minute with no clicks or mouse movement, and resume on the next interaction. Canvas content isn't recorded.
 
 ## Currency
 
@@ -154,7 +184,11 @@ hello/              The smallest Faro demo: one HTML page, no backend (see hello
 traffic/            Synthetic visitors (Playwright) that fill the dashboards: normal, heavy and error phases (see traffic/README.md)
 observability/      Local LGTM stack + Alloy Faro receiver, its own compose project (see observability/README.md)
 docker-compose.yml  The app (frontend and backend)
-start.sh            Starts the app in local or cloud mode (see above)
+start.sh            Starts the app in local or cloud mode (see above); the demo scripts below call it
+demo/               One script per demo part (hello, local, cloud, traffic) and a page of links (see "Running the demo")
+docs/               The architecture diagram
+DEMO.md             The run sheet for the talk: what to start, say and show
+SESSION_REPLAY_NOTES.md   Working notes on session replay
 .env.local.example  Settings for local mode (copied to .env.local, git ignored)
 .env.cloud.example  Settings for Grafana Cloud mode (copied to .env.cloud, git ignored)
 ```

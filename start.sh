@@ -64,7 +64,33 @@ if [ "$mode" = "local" ]; then
   docker compose -f observability/docker-compose.yml up -d
 fi
 
-docker compose --env-file "$env_file" up -d --build
+# Building checks Docker Hub for newer base images, so it needs internet. Any HTTP answer from the
+# registry (even a 401) means we are online. With no answer, skip the build and use the last one.
+if curl -s -m 4 -o /dev/null https://registry-1.docker.io/v2/; then
+  online=yes
+else
+  online=""
+fi
+
+if [ -n "$online" ]; then
+  if ! docker compose --env-file "$env_file" up -d --build; then
+    # Online, but the build failed (a real problem, or flaky wifi). Use the last build if there is one.
+    echo
+    echo "!! The build failed (see above). Trying the images that are already built..."
+    echo "!! If you changed the app's code since the last successful build, this is the OLD code."
+    if ! docker compose --env-file "$env_file" up -d --no-build; then
+      echo "There is no earlier build to use. Fix the build error above and run this again."
+      exit 1
+    fi
+  fi
+else
+  echo "No internet: skipping the build and using the last build of the app."
+  echo "(If you changed the app's code since then, rebuild once with internet.)"
+  if ! docker compose --env-file "$env_file" up -d --no-build; then
+    echo "There is no earlier build to use. Run this once with internet to build the app."
+    exit 1
+  fi
+fi
 
 if [ "$mode" = "cloud" ]; then
   # Upload this build's source maps, so errors in Grafana Cloud show original files and lines.
