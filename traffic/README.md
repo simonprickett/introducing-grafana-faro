@@ -35,6 +35,6 @@ Heavy load here means more traffic, not a struggling backend: the demo API has n
 ## Things to know
 
 - **Backend chaos is global.** The `errors` phase sets it through `/api/chaos` and resets it when the phase ends or you press Ctrl+C. Don't change Demo controls by hand while it runs.
-- **Stock runs out.** Each product starts with 25 units, orders deplete them, and nothing restocks it until the backend restarts. Set `PRODUCT_STOCK=100000` in `.env.local` and run `./start.sh local` before generating traffic, otherwise you'll see 409 out of stock errors after a few minutes. Without it, `docker compose restart backend` restocks (and resets chaos and carts).
+- **Stock runs out.** Orders deplete each product's stock, and nothing restocks it until the backend restarts. `.env.local.example` sets `PRODUCT_STOCK=1000`, which is plenty for a run. If it is empty, products have 25 each and you'll see 409 out of stock errors after a few minutes; set it and run `./start.sh local` (or `demo/local.sh`) again. Without it, `docker compose restart backend` restocks (and resets chaos and carts).
 - **Headless Chromium** is used throughout. It reports web vitals normally, but treat the numbers as indicative, not as real-user performance.
 - `DEBUG_TRAFFIC=1` prints why a visitor's step failed.
