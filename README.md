@@ -6,11 +6,7 @@ A deliberately small demo app for showing [Grafana Faro](https://grafana.com/oss
 
 It is a coffee cart: browse a menu, add things to a cart, check out. There is no real payment and no database. Data is in memory and resets when the backend restarts.
 
-```
-Browser (Faro Web SDK + tracing)  ──fetch + traceparent──▶  Backend (Node/Express + OpenTelemetry)
-        │                                                          │
-        └── Faro collector URL (FARO_URL)                          └── OTLP (OTEL_EXPORTER_OTLP_ENDPOINT)
-```
+![Architecture of the demo: the browser calls the backend with a traceparent header, so one trace spans both; the browser sends Faro data to a Faro collector and the backend sends OTLP to an OTLP endpoint.](docs/architecture-overview.svg)
 
 Everything is self-contained: Bulma, Faro and the product illustrations are bundled or served locally, so the app itself works offline. The first run needs internet (to pull the images and build the app); after that, the local setups run with no network at all.
 
@@ -186,7 +182,7 @@ observability/      Local LGTM stack + Alloy Faro receiver, its own compose proj
 docker-compose.yml  The app (frontend and backend)
 start.sh            Starts the app in local or cloud mode (see above); the demo scripts below call it
 demo/               One script per demo part (hello, local, cloud, traffic) and a page of links (see "Running the demo")
-docs/               The architecture diagram
+docs/               The architecture diagrams (overview and local stack)
 DEMO.md             The run sheet for the talk: what to start, say and show
 SESSION_REPLAY_NOTES.md   Working notes on session replay
 .env.local.example  Settings for local mode (copied to .env.local, git ignored)

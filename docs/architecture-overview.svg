@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" width="960" height="400" font-family="Helvetica, Arial, sans-serif">
+  <title>Architecture of the coffee cart demo</title>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"/>
+    </marker>
+  </defs>
+  <rect width="960" height="400" fill="#ffffff"/>
+
+  <!-- Browser -->
+  <rect x="40" y="60" width="260" height="100" rx="12" fill="#fff1e0" stroke="#f05a28" stroke-width="3"/>
+  <text x="170" y="98" text-anchor="middle" font-size="24" font-weight="700" fill="#1a202c">Browser</text>
+  <text x="170" y="128" text-anchor="middle" font-size="16" fill="#4a5568">Faro Web SDK + tracing</text>
+
+  <!-- Backend -->
+  <rect x="660" y="60" width="260" height="100" rx="12" fill="#e6f0ff" stroke="#3b82f6" stroke-width="3"/>
+  <text x="790" y="98" text-anchor="middle" font-size="24" font-weight="700" fill="#1a202c">Backend</text>
+  <text x="790" y="128" text-anchor="middle" font-size="16" fill="#4a5568">Node/Express + OpenTelemetry</text>
+
+  <!-- Faro collector -->
+  <rect x="40" y="260" width="260" height="90" rx="12" fill="#ffffff" stroke="#4a5568" stroke-width="2.5"/>
+  <text x="170" y="297" text-anchor="middle" font-size="24" font-weight="700" fill="#1a202c">Faro collector</text>
+  <text x="170" y="325" text-anchor="middle" font-size="16" fill="#4a5568">FARO_URL</text>
+
+  <!-- OTLP endpoint -->
+  <rect x="660" y="260" width="260" height="90" rx="12" fill="#ffffff" stroke="#4a5568" stroke-width="2.5"/>
+  <text x="790" y="297" text-anchor="middle" font-size="24" font-weight="700" fill="#1a202c">OTLP endpoint</text>
+  <text x="790" y="325" text-anchor="middle" font-size="14" fill="#4a5568">OTEL_EXPORTER_OTLP_ENDPOINT</text>
+
+  <!-- Arrows -->
+  <g stroke="#4a5568" stroke-width="3" fill="none" marker-end="url(#arrow)">
+    <line x1="300" y1="110" x2="658" y2="110"/>
+    <line x1="170" y1="160" x2="170" y2="258"/>
+    <line x1="790" y1="160" x2="790" y2="258"/>
+  </g>
+
+  <!-- Labels -->
+  <g font-size="15" fill="#2d3748" text-anchor="middle">
+    <text x="480" y="98">fetch + traceparent</text>
+    <text x="184" y="215" text-anchor="start">Faro data</text>
+    <text x="804" y="215" text-anchor="start">OTLP</text>
+  </g>
+</svg>
